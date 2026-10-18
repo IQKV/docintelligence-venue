@@ -228,15 +228,15 @@ A task is evaluated as done only when all of the following hold:
 
 ### Required gates by change type
 
-| Change type | Required gates |
-| --- | --- |
-| Any change | `./mvnw -q compile`, then the narrowest targeted `./mvnw test -Dtest=ClassName` |
-| New or changed interface or context class | Unit test covering the contract, then full `./mvnw verify` |
-| `AuditContextHolder` change | Unit test for the ThreadLocal contract (set/clear, no leak between threads), then full `./mvnw verify` |
-| Public interface change | Check every implementor and caller, then full `./mvnw verify` |
-| Package move or `package-info` change | ArchUnit package-structure test, then full `./mvnw verify` |
-| Dependency or build config | Full `./mvnw verify` |
-| Javadoc or `AGENTS.md` only | No code gate — state that none applies |
+| Change type                               | Required gates                                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Any change                                | `./mvnw -q compile`, then the narrowest targeted `./mvnw test -Dtest=ClassName`                        |
+| New or changed interface or context class | Unit test covering the contract, then full `./mvnw verify`                                             |
+| `AuditContextHolder` change               | Unit test for the ThreadLocal contract (set/clear, no leak between threads), then full `./mvnw verify` |
+| Public interface change                   | Check every implementor and caller, then full `./mvnw verify`                                          |
+| Package move or `package-info` change     | ArchUnit package-structure test, then full `./mvnw verify`                                             |
+| Dependency or build config                | Full `./mvnw verify`                                                                                   |
+| Javadoc or `AGENTS.md` only               | No code gate — state that none applies                                                                 |
 
 ### Ordering
 
