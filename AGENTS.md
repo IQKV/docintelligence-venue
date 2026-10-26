@@ -231,16 +231,16 @@ A task is evaluated as done only when all of the following hold:
 
 ### Required gates by change type
 
-| Change type                             | Required gates                                                                            |
-| --------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Any change                              | `./mvnw -q compile`, then the narrowest targeted `./mvnw test -Dtest=ClassName`           |
-| New or changed model type               | Unit test covering the type, then full `./mvnw verify`                                    |
-| Mapper interface or XML change          | Statement/interface pair checked against a service-level test, then full `./mvnw verify`  |
-| Type handler change                     | Unit test for the handler, then full `./mvnw verify`                                      |
-| Public API change (type, field, method) | Check all three consuming services, then full `./mvnw verify`                             |
-| Package move or `package-info` change   | ArchUnit package-structure test, then full `./mvnw verify`                                |
-| Dependency or build config              | Full `./mvnw verify`                                                                      |
-| Javadoc or `AGENTS.md` only             | No code gate — state that none applies                                                    |
+| Change type                             | Required gates                                                                           |
+| --------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Any change                              | `./mvnw -q compile`, then the narrowest targeted `./mvnw test -Dtest=ClassName`          |
+| New or changed model type               | Unit test covering the type, then full `./mvnw verify`                                   |
+| Mapper interface or XML change          | Statement/interface pair checked against a service-level test, then full `./mvnw verify` |
+| Type handler change                     | Unit test for the handler, then full `./mvnw verify`                                     |
+| Public API change (type, field, method) | Check all three consuming services, then full `./mvnw verify`                            |
+| Package move or `package-info` change   | ArchUnit package-structure test, then full `./mvnw verify`                               |
+| Dependency or build config              | Full `./mvnw verify`                                                                     |
+| Javadoc or `AGENTS.md` only             | No code gate — state that none applies                                                   |
 
 ### Ordering
 

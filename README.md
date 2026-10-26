@@ -13,11 +13,11 @@ The suite used to carry its own copy of the venue model in each service. This ar
 
 ## Consumers
 
-| Service | Use |
-| --- | --- |
-| `docintelligence-master-venue-worker` | Writes the master catalog — the owning writer |
-| `docintelligence-catalog-service` | Admin CRUD and the HTTP surface |
-| `docintelligence-catalog-processing-worker` | Tenant extraction and catalog matching |
+| Service                                     | Use                                           |
+| ------------------------------------------- | --------------------------------------------- |
+| `docintelligence-master-venue-worker`       | Writes the master catalog — the owning writer |
+| `docintelligence-catalog-service`           | Admin CRUD and the HTTP surface               |
+| `docintelligence-catalog-processing-worker` | Tenant extraction and catalog matching        |
 
 A change to a shared type compiles in all three at once.
 
