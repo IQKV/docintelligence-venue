@@ -1,16 +1,25 @@
-# Foundation Audit SPI 🔌
+# Document Intelligence Venue 📍
 
-Service Provider Interface (SPI) for the IQKV platform's audit logging system. Defines the core contracts and interfaces that decouple domain services from specific audit storage and publishing implementations.
+Shared venue domain model and MyBatis persistence for the DocIntelligence suite. One library, consumed by every service that reads or writes the venue tables.
 
 ## About
 
-The Audit SPI library enforces the "No Vendor Lock-in" philosophy for platform compliance:
+The suite used to carry its own copy of the venue model in each service. This artifact replaces those copies:
 
-- **Audit Storage Abstraction** — defines `AuditStore` and `AuditLogService` interfaces, allowing backends (PostgreSQL, Elasticsearch, etc.) to be swapped without changing business logic.
-- **Publisher Contracts** — provides the `AuditEventPublisher` interface for services to emit audit events consistently.
-- **Provider Discovery** — utilizes standard Java SPI or Spring Boot auto-configuration patterns to load the active audit provider at runtime.
-- **Search & Retention API** — standardizes how audit logs are searched, filtered, and purged, regardless of the underlying data store.
-- **Extensibility** — makes it easy for platform users to plug in custom audit providers (e.g., for integration with enterprise SIEM systems).
+- **One flat package** — `com.iqkv.docintelligence.venue`. The bounded context is carried by the type name, not by a sub-package: `MasterVenue` is platform-owned reference data in `public.master_venue`, while the tenant-side types read and write a `t_{tenantKey}` schema.
+- **Model and persistence together** — the mapper interface, its XML and the MyBatis type handlers ship in the same jar, so a statement and the type it maps can never drift apart.
+- **No services, no beans** — no HTTP surface, no business logic, no DDL. `docintelligence-catalog-service` owns every migration; `docintelligence-master-venue-worker` is the sole writer of `public.master_venue*`.
+- **Drop-in for consumers** — MyBatis is an `optional` dependency and the mapper XML is resolved by the consumers' existing `classpath*:mappers/` scan, so no configuration change is needed to pick it up.
+
+## Consumers
+
+| Service | Use |
+| --- | --- |
+| `docintelligence-master-venue-worker` | Writes the master catalog — the owning writer |
+| `docintelligence-catalog-service` | Admin CRUD and the HTTP surface |
+| `docintelligence-catalog-processing-worker` | Tenant extraction and catalog matching |
+
+A change to a shared type compiles in all three at once.
 
 ## Quick Links
 
@@ -22,7 +31,7 @@ The Audit SPI library enforces the "No Vendor Lock-in" philosophy for platform c
 ## Tech Stack
 
 - Java 25
-- Spring Data Commons (for pagination contracts)
+- MyBatis (`optional` runtime — every consumer already provides it)
 - Maven 3.9+
 
 ## Development

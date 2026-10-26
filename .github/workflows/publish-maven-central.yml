@@ -87,8 +87,8 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${{ steps.extract_version.outputs.VERSION }}"
-          GROUP_PATH="com/iqkv/foundation-audit-spi"
-          ARTIFACT="foundation-audit-spi"
+          GROUP_PATH="com/iqkv/docintelligence-venue"
+          ARTIFACT="docintelligence-venue"
           STAGING="target/manual-staging/${GROUP_PATH}/${VERSION}"
           mkdir -p "${STAGING}"
 

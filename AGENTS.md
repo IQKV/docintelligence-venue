@@ -2,13 +2,15 @@
 
 ## Project Overview
 
-**Foundation Audit SPI** — Service Provider Interface for the iQ Foundation audit logging subsystem. Defines the contracts that audit backends (PostgreSQL, Elasticsearch, etc.) and Spring MVC web infrastructure must implement. Depends on `foundation-audit-model`; has no business logic of its own.
+**Document Intelligence Venue** — shared venue domain model and MyBatis persistence for the DocIntelligence suite. Holds the platform-owned master catalog types and, as the tenant side lands, the tenant-scoped venue types. It is a library: no application class, no HTTP surface.
 
 **Key characteristics:**
 
 - Java 25, single Maven module, parent `com.iqkv:boot-parent-pom`
-- Defines interfaces and thread-local context infrastructure — no concrete implementations
-- Spring Data Commons + Spring WebMVC (`optional`) as the only Spring dependencies
+- One flat package per bounded context — `com.iqkv.docintelligence.venue`; the context is carried by the type name (`MasterVenue` = platform table, `Venue` = tenant table), not by a sub-package
+- Model classes plus the mapper interface, its XML and the MyBatis type handlers — no services, no Spring beans
+- MyBatis is the only compile dependency and it is `optional` — every consumer already provides it
+- Mapper XML ships in the jar; consumers resolve it through their existing `classpath*:mappers/` scan
 - ArchUnit tests verify package structure
 - Checkstyle enforced at `validate` phase via `com.iqkv:checkstyle-config`
 - JaCoCo: ≥ 90% instruction + line + branch coverage per class (`jacoco.skip=true` by default; CI enables it)
@@ -16,95 +18,96 @@
 ## Dependency Relationship
 
 ```
-foundation-audit-model   (data types: AuditEvent, AuditActor, enums)
+docintelligence-venue                     (venue model, mappers, type handlers)
         ↓
-foundation-audit-spi     (contracts: interfaces + context infrastructure)
-        ↓
-foundation-audit-service (concrete implementation: Spring Boot, persistence)
+docintelligence-catalog-service           (HTTP surface, admin CRUD, DDL owner)
+docintelligence-catalog-processing-worker (tenant extraction and catalog matching)
+docintelligence-master-venue-worker       (sole writer of public.master_venue*)
 ```
 
-Changes to `foundation-audit-model` may cascade here — read both before editing either.
+One artifact, three consumers: a change to a shared type compiles in all three at once, so read every call site before editing. This replaces the earlier rule where each service carried its own copy of the model — do not reintroduce the copies.
 
 ## Project Structure
 
 ```
-src/main/java/com/iqkv/foundation/audit/spi/
+src/main/java/com/iqkv/docintelligence/venue/
 ├── package-info.java
-├── ActivityLogRepository.java    # Repository contract for querying stored audit logs
-├── AuditEventPublisher.java      # Contract for publishing events to external systems (e.g., RabbitMQ)
-├── AuditLogService.java          # Primary interface: log(AuditEvent)
-├── AuditProvider.java            # Marker interface for backend provider identity
-└── context/
-    ├── AuditContextHolder.java       # ThreadLocal holder for AuditActor (IP, User-Agent)
-    ├── AuditContextInterceptor.java  # Spring MVC interceptor — populates AuditContextHolder per request
-    └── AuditEventEnricher.java       # Contract for enriching AuditEvent before dispatch
+├── MasterVenue.java              # One row of the platform-owned public.master_venue
+├── MasterVenueMapper.java        # MyBatis reads and writes for public.master_venue
+└── mybatis/
+    ├── JsonTypeHandler.java      # JSON/JSONB column bound as Types.OTHER
+    └── UuidTypeHandler.java      # UUID registration for the session
+
+src/main/resources/mappers/venue/
+└── MasterVenueMapper.xml         # Statements behind MasterVenueMapper — ships in the jar
 ```
+
+Tenant-scoped types (`Venue`, `VenueAsset`, `VenueMetadata`) land in the same flat `venue` package, not in a `tenant/` sub-package.
 
 ## Design Rules
 
 ### What belongs here
 
-- Interfaces that define contracts for audit backends (`AuditLogService`, `AuditEventPublisher`, `ActivityLogRepository`)
-- Thread-local context infrastructure (`AuditContextHolder`)
-- Spring MVC interceptor that populates the context (`AuditContextInterceptor`)
-- Enrichment contracts (`AuditEventEnricher`)
+- Venue domain types for both contexts: platform (`MasterVenue`) and tenant (`Venue`, `VenueAsset`, `VenueMetadata`)
+- The MyBatis mapper interfaces for those types, with a matching XML file per mapper
+- MyBatis type handlers shared with those mappers (`JsonTypeHandler`, `UuidTypeHandler`)
 
 ### What does NOT belong here
 
-- Concrete implementations (database queries, message broker calls, Spring `@Component` beans)
-- Business logic — this is a contract layer
-- New Spring dependencies beyond `spring-data-commons` and `spring-webmvc` without explicit approval
+- Spring beans of any kind — `@Service`, `@RestController`, `@Configuration`, `@Component`
+- Business logic — this is a model and persistence layer, not an application layer
+- DTOs and their mappers (`MasterVenueDtos`, `MasterVenueDtoMapper`): HTTP payload shapes belong to the HTTP surface in `docintelligence-catalog-service`
+- Liquibase changelogs, DDL, and schema creation — `docintelligence-catalog-service` owns every migration
+- Tenant-schema switching (`MyBatisSchemaInterceptor`) and `MyBatisConfig` — each service decides per workload whether a tenant context applies
 - Persistence annotations (JPA, Hibernate)
 
-### ThreadLocal contract (`AuditContextHolder`)
+### Table ownership
 
-`AuditContextHolder` uses `ThreadLocal<AuditActor>`. Callers must:
+`docintelligence-master-venue-worker` is the sole writer of `public.master_venue`, `public.master_venue_alias`, and `public.master_venue_external`. `docintelligence-catalog-service` reads them for the admin CRUD surface. Nothing in this repository issues DDL.
 
-1. Set context at request entry (`AuditContextInterceptor.preHandle`)
-2. Clear context at request exit (`AuditContextInterceptor.afterCompletion`) — **never skip the clear**
-3. Never pass the holder across async boundaries without explicit propagation
+### Mapper and XML move together
 
-### Interface stability
+A method on a mapper interface needs its statement in the matching XML in the same change, and the `resultMap` column list follows the type's fields. A half-applied pair fails at runtime, not at build time.
 
-All interfaces here are public contracts consumed by `foundation-audit-service` and potentially by external services. Adding a method to an existing interface is a **breaking change**. Use a new interface or a default method with a `UnsupportedOperationException` body and document the migration path.
+### Compatibility
+
+The artifact is consumed by three services. Adding a type or a field is compatible. Changing a field's type, renaming a type, or removing a mapper method is **breaking for all consumers at once** — check all three before editing.
 
 ### Javadoc
 
-Every public interface, method, and class requires Javadoc. For interfaces, document each method's contract including thread-safety and null handling.
+Every public type and public method requires Javadoc. On model types, name the schema and the table the type maps to and, where it applies, the writer that owns the table. On mapper methods, document ordering and null handling of the returned collection.
 
 ## Code Standards
 
 ```java
-// Interface — document the contract, thread-safety, and null behaviour
+// Model type — name the table and its owning writer in the Javadoc
 /**
- * Primary interface for logging audit events.
+ * A platform-owned master venue — one row of the {@code public.master_venue} reference dataset.
  *
- * <p>Implementations must be thread-safe. A null event must throw
- * {@link IllegalArgumentException}.
+ * <p>Platform-level data, not tenant-scoped. The table is created and owned by
+ * {@code docintelligence-catalog-service}.
  */
-public interface AuditLogService {
+public class MasterVenue {
 
-  /**
-   * Logs an audit event.
-   *
-   * @param event the audit event to log; must not be null
-   */
-  void log(AuditEvent event);
+  private UUID id;
+  private String metadata;  // raw JSONB document, carries the mandatory _schema_version key
 }
 
-// ThreadLocal utility — always clear in finally or interceptor afterCompletion
-public static void clearContext() {
-  CONTEXT.remove();  // remove(), not set(null) — avoids memory leaks in thread pools
-}
+// Mapper method — @Mapper on the interface, @Param on every argument, statement in the XML
+List<MasterVenue> findAll(@Param("limit") int limit, @Param("offset") int offset);
+
+// Type handler — no PostgreSQL driver dependency: bind as OTHER and let the driver coerce
+ps.setObject(i, parameter, Types.OTHER);
 ```
 
 ## Execution Discipline
 
-- Read `foundation-audit-model` and `foundation-audit-service` before changing any interface here — both are affected.
-- Adding a method to an existing interface is breaking — check all known implementations first.
-- `AuditContextHolder.clearContext()` must always be called in a `finally` block or `afterCompletion` — verify any new caller does this.
+- Read the call sites in all three consumers before changing a shared type — one edit compiles in three services.
+- A mapper interface change without its XML statement, or the reverse, is an incomplete change — apply both or neither.
+- Type handlers are registered by class in each service's `MyBatisConfig`; keep handler class names stable or update all three registrations.
+- Never add a PostgreSQL driver dependency to make a handler compile — the handlers bind through `Types.OTHER` on purpose.
 - After two identical build failures without new evidence, change approach — do not retry blindly.
-- Run `./mvnw verify -Djacoco.skip=false` to include coverage gates when touching context classes.
+- Run `./mvnw verify -Djacoco.skip=false` to include coverage gates when touching model or handler classes.
 
 ## Minimal Change Discipline
 
@@ -149,18 +152,18 @@ Never cut: validation at trust boundaries, error handling that prevents data los
 
 ## Security
 
-- `AuditContextHolder` carries client IP and User-Agent — treat as sensitive; never log at DEBUG in examples.
-- `AuditContextInterceptor` extracts data from the HTTP request — validate and sanitise inputs; do not store raw header values without trimming.
-- No credentials, tokens, or real PII in source, tests, or Javadoc examples.
+- `MasterVenue.metadata` holds raw JSONB canonical metadata collected from public sources — treat venue names, addresses, phone numbers, and emails as personal data; no real values in tests, fixtures, or Javadoc examples.
+- Mapper XML binds every value as a parameter — never interpolate a value into a statement with `${}`.
+- No credentials, connection strings, or tokens in source, tests, or Javadoc examples.
 
 ## AI Agent Development Guidelines
 
 ### Code generation principles
 
-1. **Contracts only**: no implementations, no Spring `@Component`/`@Service` beans
-2. **Default methods for evolution**: prefer `default` methods with explicit `UnsupportedOperationException` over breaking existing interfaces
-3. **ThreadLocal discipline**: every `set` has a paired `remove` in `finally` or `afterCompletion`
-4. **Javadoc contracts**: document thread-safety, null handling, and lifecycle for every interface method
+1. **Model and persistence only**: no services, no Spring beans, no HTTP types
+2. **Interface, XML and `resultMap` move together**: a mapper method without its statement is an incomplete change
+3. **Handlers stay framework-free**: no PostgreSQL driver, no Spring — bind through `Types.OTHER`, and registration stays in each service's `MyBatisConfig`
+4. **Javadoc contracts**: schema and table on model types; ordering and null handling on mapper methods
 
 ### Approval workflow (MANDATORY)
 
@@ -184,17 +187,17 @@ Format: `type(scope): subject`
 
 - Subject: imperative, lowercase, no trailing period, ≤ 72 chars
 - Types: `feat`, `fix`, `improvement`, `refactor`, `docs`, `test`, `chore`, `ci`, `revert`
-- Scope: affected interface or package (e.g., `audit-log-service`, `context`, `enricher`, `publisher`)
+- Scope: affected type or package (e.g., `master-venue`, `master-venue-mapper`, `mybatis`, `package-info`)
 - For `fix`: describe the symptom and trigger, not the code change
-    - ✅ `fix(context): thread-local not cleared after async dispatch causes actor leak`
-    - ❌ `fix(context): add remove() call in afterCompletion`
+    - ✅ `fix(master-venue-mapper): findByNameIgnoreCase misses venues whose name differs only in case`
+    - ❌ `fix(master-venue-mapper): add lower() to the where clause`
 
 Examples:
 
-- `feat(audit-log-service): add batch log method for bulk event ingestion`
-- `fix(context-interceptor): actor not cleared when response is committed early`
-- `refactor(audit-provider): extract getName into separate NamedProvider interface`
-- `docs(audit-event-publisher): clarify at-least-once delivery guarantee in Javadoc`
+- `feat(venue): add the tenant Venue model`
+- `fix(master-venue-mapper): findAll returns the wrong page when limit is zero`
+- `refactor(mybatis): move JsonTypeHandler next to the mapper it serves`
+- `docs(master-venue): state the owning writer of public.master_venue`
 
 ## Development Commands
 
@@ -228,15 +231,16 @@ A task is evaluated as done only when all of the following hold:
 
 ### Required gates by change type
 
-| Change type                               | Required gates                                                                                         |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Any change                                | `./mvnw -q compile`, then the narrowest targeted `./mvnw test -Dtest=ClassName`                        |
-| New or changed interface or context class | Unit test covering the contract, then full `./mvnw verify`                                             |
-| `AuditContextHolder` change               | Unit test for the ThreadLocal contract (set/clear, no leak between threads), then full `./mvnw verify` |
-| Public interface change                   | Check every implementor and caller, then full `./mvnw verify`                                          |
-| Package move or `package-info` change     | ArchUnit package-structure test, then full `./mvnw verify`                                             |
-| Dependency or build config                | Full `./mvnw verify`                                                                                   |
-| Javadoc or `AGENTS.md` only               | No code gate — state that none applies                                                                 |
+| Change type                             | Required gates                                                                            |
+| --------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Any change                              | `./mvnw -q compile`, then the narrowest targeted `./mvnw test -Dtest=ClassName`           |
+| New or changed model type               | Unit test covering the type, then full `./mvnw verify`                                    |
+| Mapper interface or XML change          | Statement/interface pair checked against a service-level test, then full `./mvnw verify`  |
+| Type handler change                     | Unit test for the handler, then full `./mvnw verify`                                      |
+| Public API change (type, field, method) | Check all three consuming services, then full `./mvnw verify`                             |
+| Package move or `package-info` change   | ArchUnit package-structure test, then full `./mvnw verify`                                |
+| Dependency or build config              | Full `./mvnw verify`                                                                      |
+| Javadoc or `AGENTS.md` only             | No code gate — state that none applies                                                    |
 
 ### Ordering
 
