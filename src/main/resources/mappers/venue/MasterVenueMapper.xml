@@ -23,7 +23,7 @@
         (id, name, address, city, location_lat, location_lng, metadata, confidence, source)
         VALUES
         (#{id}, #{name}, #{address}, #{city}, #{locationLat}, #{locationLng},
-        #{metadata, jdbcType=OTHER, typeHandler=com.iqkv.docintelligence.venue.mybatis.JsonTypeHandler},
+        #{metadata, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.JsonTypeHandler},
         #{confidence}, #{source})
     </insert>
 
@@ -34,7 +34,7 @@
         city = #{city},
         location_lat = #{locationLat},
         location_lng = #{locationLng},
-        metadata = #{metadata, jdbcType=OTHER, typeHandler=com.iqkv.docintelligence.venue.mybatis.JsonTypeHandler},
+        metadata = #{metadata, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.JsonTypeHandler},
         confidence = #{confidence},
         source = #{source},
         updated_at = NOW()

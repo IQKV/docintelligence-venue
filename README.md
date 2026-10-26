@@ -7,7 +7,7 @@ Shared venue domain model and MyBatis persistence for the DocIntelligence suite.
 The suite used to carry its own copy of the venue model in each service. This artifact replaces those copies:
 
 - **One flat package** — `com.iqkv.docintelligence.venue`. The bounded context is carried by the type name, not by a sub-package: `MasterVenue` is platform-owned reference data in `public.master_venue`, while the tenant-side types read and write a `t_{tenantKey}` schema.
-- **Model and persistence together** — the mapper interface, its XML and the MyBatis type handlers ship in the same jar, so a statement and the type it maps can never drift apart.
+- **Model and persistence together** — the mapper interface and its XML ship in the same jar, so a statement and the type it maps can never drift apart.
 - **No services, no beans** — no HTTP surface, no business logic, no DDL. `docintelligence-catalog-service` owns every migration; `docintelligence-master-venue-worker` is the sole writer of `public.master_venue*`.
 - **Drop-in for consumers** — MyBatis is an `optional` dependency and the mapper XML is resolved by the consumers' existing `classpath*:mappers/` scan, so no configuration change is needed to pick it up.
 
@@ -31,6 +31,7 @@ A change to a shared type compiles in all three at once.
 ## Tech Stack
 
 - Java 25
+- `com.iqkv:foundation-mybatis-util` (JSON/JSONB and UUID type handlers)
 - MyBatis (`optional` runtime — every consumer already provides it)
 - Maven 3.9+
 

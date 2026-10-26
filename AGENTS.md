@@ -8,8 +8,8 @@
 
 - Java 25, single Maven module, parent `com.iqkv:boot-parent-pom`
 - One flat package per bounded context — `com.iqkv.docintelligence.venue`; the context is carried by the type name (`MasterVenue` = platform table, `Venue` = tenant table), not by a sub-package
-- Model classes plus the mapper interface, its XML and the MyBatis type handlers — no services, no Spring beans
-- MyBatis is the only compile dependency and it is `optional` — every consumer already provides it
+- Model classes plus the mapper interface and its XML — no services, no Spring beans
+- `com.iqkv:foundation-mybatis-util` provides the JSON/JSONB and UUID type handlers the mapper XML references; MyBatis itself is `optional` — every consumer already provides it
 - Mapper XML ships in the jar; consumers resolve it through their existing `classpath*:mappers/` scan
 - ArchUnit tests verify package structure
 - Checkstyle enforced at `validate` phase via `com.iqkv:checkstyle-config`
@@ -18,7 +18,7 @@
 ## Dependency Relationship
 
 ```
-docintelligence-venue                     (venue model, mappers, type handlers)
+docintelligence-venue                     (venue model, mappers)
         ↓
 docintelligence-catalog-service           (HTTP surface, admin CRUD, DDL owner)
 docintelligence-catalog-processing-worker (tenant extraction and catalog matching)
@@ -34,9 +34,6 @@ src/main/java/com/iqkv/docintelligence/venue/
 ├── package-info.java
 ├── MasterVenue.java              # One row of the platform-owned public.master_venue
 ├── MasterVenueMapper.java        # MyBatis reads and writes for public.master_venue
-└── mybatis/
-    ├── JsonTypeHandler.java      # JSON/JSONB column bound as Types.OTHER
-    └── UuidTypeHandler.java      # UUID registration for the session
 
 src/main/resources/mappers/venue/
 └── MasterVenueMapper.xml         # Statements behind MasterVenueMapper — ships in the jar
@@ -50,7 +47,6 @@ Tenant-scoped types (`Venue`, `VenueAsset`, `VenueMetadata`) land in the same fl
 
 - Venue domain types for both contexts: platform (`MasterVenue`) and tenant (`Venue`, `VenueAsset`, `VenueMetadata`)
 - The MyBatis mapper interfaces for those types, with a matching XML file per mapper
-- MyBatis type handlers shared with those mappers (`JsonTypeHandler`, `UuidTypeHandler`)
 
 ### What does NOT belong here
 
@@ -95,16 +91,13 @@ public class MasterVenue {
 
 // Mapper method — @Mapper on the interface, @Param on every argument, statement in the XML
 List<MasterVenue> findAll(@Param("limit") int limit, @Param("offset") int offset);
-
-// Type handler — no PostgreSQL driver dependency: bind as OTHER and let the driver coerce
-ps.setObject(i, parameter, Types.OTHER);
 ```
 
 ## Execution Discipline
 
 - Read the call sites in all three consumers before changing a shared type — one edit compiles in three services.
 - A mapper interface change without its XML statement, or the reverse, is an incomplete change — apply both or neither.
-- Type handlers are registered by class in each service's `MyBatisConfig`; keep handler class names stable or update all three registrations.
+- Type handlers come from `foundation-mybatis-util`; they are registered by class in each service's `MyBatisConfig`, so a handler rename reaches all three registrations.
 - Never add a PostgreSQL driver dependency to make a handler compile — the handlers bind through `Types.OTHER` on purpose.
 - After two identical build failures without new evidence, change approach — do not retry blindly.
 - Run `./mvnw verify -Djacoco.skip=false` to include coverage gates when touching model or handler classes.
@@ -162,7 +155,7 @@ Never cut: validation at trust boundaries, error handling that prevents data los
 
 1. **Model and persistence only**: no services, no Spring beans, no HTTP types
 2. **Interface, XML and `resultMap` move together**: a mapper method without its statement is an incomplete change
-3. **Handlers stay framework-free**: no PostgreSQL driver, no Spring — bind through `Types.OTHER`, and registration stays in each service's `MyBatisConfig`
+3. **Handlers come from `foundation-mybatis-util`**: this repo holds no type handler code; the mapper XML names the shared handlers and registration stays in each service's `MyBatisConfig`
 4. **Javadoc contracts**: schema and table on model types; ordering and null handling on mapper methods
 
 ### Approval workflow (MANDATORY)
@@ -187,7 +180,7 @@ Format: `type(scope): subject`
 
 - Subject: imperative, lowercase, no trailing period, ≤ 72 chars
 - Types: `feat`, `fix`, `improvement`, `refactor`, `docs`, `test`, `chore`, `ci`, `revert`
-- Scope: affected type or package (e.g., `master-venue`, `master-venue-mapper`, `mybatis`, `package-info`)
+- Scope: affected type or package (e.g., `master-venue`, `master-venue-mapper`, `package-info`)
 - For `fix`: describe the symptom and trigger, not the code change
     - ✅ `fix(master-venue-mapper): findByNameIgnoreCase misses venues whose name differs only in case`
     - ❌ `fix(master-venue-mapper): add lower() to the where clause`
@@ -196,7 +189,7 @@ Examples:
 
 - `feat(venue): add the tenant Venue model`
 - `fix(master-venue-mapper): findAll returns the wrong page when limit is zero`
-- `refactor(mybatis): move JsonTypeHandler next to the mapper it serves`
+- `refactor(master-venue-mapper): drop the local type handlers in favour of foundation-mybatis-util`
 - `docs(master-venue): state the owning writer of public.master_venue`
 
 ## Development Commands

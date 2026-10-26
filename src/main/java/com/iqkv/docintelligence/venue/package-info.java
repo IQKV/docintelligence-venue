@@ -29,7 +29,6 @@
  *   <li>{@code MasterVenue} — one row of {@code public.master_venue}</li>
  *   <li>{@code MasterVenueMapper} and {@code mappers/venue/MasterVenueMapper.xml} — MyBatis reads
  *       and writes for the master catalog tables</li>
- *   <li>{@code mybatis/} — JSON/JSONB and UUID type handlers referenced by the mapper XML</li>
  * </ul>
  *
  * <h2>What Stays Out</h2>
