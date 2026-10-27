@@ -34,9 +34,12 @@ src/main/java/com/iqkv/docintelligence/venue/
 ├── package-info.java
 ├── MasterVenue.java              # One row of the platform-owned public.master_venue
 ├── MasterVenueMapper.java        # MyBatis reads and writes for public.master_venue
+├── MasterVenueAsset.java         # One asset of a master venue — public.master_venue_asset
+├── MasterVenueAssetMapper.java   # MyBatis reads and writes for public.master_venue_asset
 
 src/main/resources/mappers/venue/
-└── MasterVenueMapper.xml         # Statements behind MasterVenueMapper — ships in the jar
+├── MasterVenueMapper.xml         # Statements behind MasterVenueMapper — ships in the jar
+└── MasterVenueAssetMapper.xml    # Statements behind MasterVenueAssetMapper — ships in the jar
 ```
 
 Tenant-scoped types (`Venue`, `VenueAsset`, `VenueMetadata`) land in the same flat `venue` package, not in a `tenant/` sub-package.
@@ -45,7 +48,7 @@ Tenant-scoped types (`Venue`, `VenueAsset`, `VenueMetadata`) land in the same fl
 
 ### What belongs here
 
-- Venue domain types for both contexts: platform (`MasterVenue`) and tenant (`Venue`, `VenueAsset`, `VenueMetadata`)
+- Venue domain types for both contexts: platform (`MasterVenue`, `MasterVenueAsset`) and tenant (`Venue`, `VenueAsset`, `VenueMetadata`)
 - The MyBatis mapper interfaces for those types, with a matching XML file per mapper
 
 ### What does NOT belong here
@@ -59,7 +62,7 @@ Tenant-scoped types (`Venue`, `VenueAsset`, `VenueMetadata`) land in the same fl
 
 ### Table ownership
 
-`docintelligence-master-venue-worker` is the sole writer of `public.master_venue`, `public.master_venue_alias`, and `public.master_venue_external`. `docintelligence-catalog-service` reads them for the admin CRUD surface. Nothing in this repository issues DDL.
+`docintelligence-master-venue-worker` is the sole writer of `public.master_venue`, `public.master_venue_alias`, `public.master_venue_external`, and `public.master_venue_asset`. `docintelligence-catalog-service` reads them for the admin CRUD surface. Nothing in this repository issues DDL.
 
 ### Mapper and XML move together
 
