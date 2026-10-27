@@ -29,14 +29,20 @@
  *   <li>{@code MasterVenue} — one row of {@code public.master_venue}</li>
  *   <li>{@code MasterVenueMapper} and {@code mappers/venue/MasterVenueMapper.xml} — MyBatis reads
  *       and writes for the master catalog tables</li>
+ *   <li>{@code MasterVenueAsset} — one asset of a master venue, a row of
+ *       {@code public.master_venue_asset}</li>
+ *   <li>{@code MasterVenueAssetMapper} and {@code mappers/venue/MasterVenueAssetMapper.xml} —
+ *       MyBatis reads and writes for the master venue assets</li>
  * </ul>
  *
  * <h2>What Stays Out</h2>
  * <p>No Spring beans, no REST resources and no business services. The HTTP surface, the DTO
  * payload shapes and the Liquibase changelogs stay in {@code docintelligence-catalog-service},
- * which owns the DDL for {@code public.master_venue}. Write ownership of
- * {@code public.master_venue}, {@code public.master_venue_alias} and
- * {@code public.master_venue_external} belongs to {@code docintelligence-master-venue-worker}.
+ * which owns the DDL for {@code public.master_venue} and {@code public.master_venue_asset}.
+ * Write ownership of
+ * {@code public.master_venue}, {@code public.master_venue_alias},
+ * {@code public.master_venue_external} and {@code public.master_venue_asset} belongs to
+ * {@code docintelligence-master-venue-worker}.
  *
  * <h2>Usage</h2>
  * <p>A plain library for {@code docintelligence-catalog-service},

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iqkv.docintelligence.venue.MasterVenueAssetMapper">
+
+    <resultMap id="masterVenueAssetResultMap"
+               type="com.iqkv.docintelligence.venue.MasterVenueAsset">
+        <id property="id" column="id"/>
+        <result property="masterVenueId" column="master_venue_id"/>
+        <result property="assetType" column="asset_type"/>
+        <result property="photoCategory" column="photo_category"/>
+        <result property="displayOrder" column="display_order"/>
+        <result property="label" column="label"/>
+        <result property="fileName" column="file_name"/>
+        <result property="contentType" column="content_type"/>
+        <result property="sizeBytes" column="size_bytes"/>
+        <result property="s3Key" column="s3_key"/>
+        <result property="sourceUrl" column="source_url"/>
+        <result property="provider" column="provider"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="masterVenueAssetColumns">
+        id, master_venue_id, asset_type, photo_category, display_order, label, file_name,
+        content_type, size_bytes, s3_key, source_url, provider, created_at, updated_at
+    </sql>
+
+    <insert id="insert" parameterType="com.iqkv.docintelligence.venue.MasterVenueAsset">
+        INSERT INTO public.master_venue_asset
+        (id, master_venue_id, asset_type, photo_category, display_order, label, file_name,
+        content_type, size_bytes, s3_key, source_url, provider)
+        VALUES
+        (#{id}, #{masterVenueId}, #{assetType}, #{photoCategory}, #{displayOrder}, #{label},
+        #{fileName}, #{contentType}, #{sizeBytes}, #{s3Key}, #{sourceUrl}, #{provider})
+    </insert>
+
+    <update id="update" parameterType="com.iqkv.docintelligence.venue.MasterVenueAsset">
+        UPDATE public.master_venue_asset
+        SET master_venue_id = #{masterVenueId},
+        asset_type = #{assetType},
+        photo_category = #{photoCategory},
+        display_order = #{displayOrder},
+        label = #{label},
+        file_name = #{fileName},
+        content_type = #{contentType},
+        size_bytes = #{sizeBytes},
+        s3_key = #{s3Key},
+        source_url = #{sourceUrl},
+        provider = #{provider},
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM public.master_venue_asset
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByMasterVenueId">
+        DELETE FROM public.master_venue_asset
+        WHERE master_venue_id = #{masterVenueId}
+    </delete>
+
+    <select id="findById" resultMap="masterVenueAssetResultMap">
+        SELECT <include refid="masterVenueAssetColumns"/>
+        FROM public.master_venue_asset
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByMasterVenueId" resultMap="masterVenueAssetResultMap">
+        SELECT <include refid="masterVenueAssetColumns"/>
+        FROM public.master_venue_asset
+        WHERE master_venue_id = #{masterVenueId}
+        ORDER BY display_order, id
+    </select>
+
+</mapper>
