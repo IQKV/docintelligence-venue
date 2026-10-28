@@ -30,17 +30,42 @@ import org.apache.ibatis.annotations.Param;
  * master venue assets are platform-owned reference data, never tenant-scoped.
  * {@code created_at} / {@code updated_at} are maintained by the database.
  *
+ * <p>{@code (master_venue_id, file_name)} is unique — {@code uq_master_venue_asset_venue_file} —
+ * so a re-delivered record refreshes the assets it carries instead of duplicating them:
+ * {@link #upsertByVenueAndFileName(MasterVenueAsset)} is the conflict-aware write and
+ * {@link #findByVenueAndFileName(UUID, String)} resolves the row an asset is stored as.
+ *
  * <p>The matching statements live in {@code mappers/venue/MasterVenueAssetMapper.xml}, which
  * ships inside this artifact; consumers pick it up through their existing
  * {@code classpath*:mappers/} scan. Write ownership of the table belongs to
  * {@code docintelligence-master-venue-worker} — a consumer that only reads must not call
- * {@link #insert(MasterVenueAsset)}, {@link #update(MasterVenueAsset)},
+ * {@link #insert(MasterVenueAsset)}, {@link #upsertByVenueAndFileName(MasterVenueAsset)},
+ * {@link #update(MasterVenueAsset)},
  * {@link #deleteById(UUID)} or {@link #deleteByMasterVenueId(UUID)}.
  */
 @Mapper
 public interface MasterVenueAssetMapper {
 
   void insert(MasterVenueAsset asset);
+
+  /**
+   * Writes one asset of a venue, refreshing the row the venue already holds for that file name —
+   * the write a re-ingested or re-delivered record uses.
+   *
+   * <p>The file name decides which row is written: on a known
+   * {@code (masterVenueId, fileName)} pair the existing row is refreshed, so
+   * {@code asset.getId()} is honoured only when the pair is new and the stored row keeps its own
+   * id. The asset columns and {@code updated_at} are refreshed either way; {@code created_at} is
+   * left as it is.
+   *
+   * <p>The id is the {@code {assetId}} segment of the storage key, so a caller that re-ingests a
+   * record resolves the id first with {@link #findByVenueAndFileName(UUID, String)} and writes
+   * that id — the key it stores the bytes under then stays the key the row points at.
+   *
+   * @param asset the asset to write; {@code masterVenueId} and {@code fileName} are the conflict
+   *              target, {@code id} the candidate id for a pair that is not stored yet
+   */
+  void upsertByVenueAndFileName(MasterVenueAsset asset);
 
   void update(MasterVenueAsset asset);
 
@@ -56,6 +81,19 @@ public interface MasterVenueAssetMapper {
   void deleteByMasterVenueId(@Param("masterVenueId") UUID masterVenueId);
 
   Optional<MasterVenueAsset> findById(@Param("id") UUID id);
+
+  /**
+   * Resolves one asset of a venue by the file it was stored from.
+   *
+   * <p>The read a re-ingest makes before storing the bytes: it yields the id the storage key is
+   * built around, so the record can be written back to the key it already occupies.
+   *
+   * @param masterVenueId the owning venue
+   * @param fileName      the name of the stored file, unique within the venue
+   * @return the asset, or empty when the venue carries no such file
+   */
+  Optional<MasterVenueAsset> findByVenueAndFileName(
+      @Param("masterVenueId") UUID masterVenueId, @Param("fileName") String fileName);
 
   /**
    * All assets of one venue, ordered by {@code display_order} then id — the order the gallery

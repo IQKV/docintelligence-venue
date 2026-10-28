@@ -32,7 +32,8 @@
  *   <li>{@code MasterVenueAsset} — one asset of a master venue, a row of
  *       {@code public.master_venue_asset}</li>
  *   <li>{@code MasterVenueAssetMapper} and {@code mappers/venue/MasterVenueAssetMapper.xml} —
- *       MyBatis reads and writes for the master venue assets</li>
+ *       MyBatis reads and writes for the master venue assets, including the upsert keyed on the
+ *       venue and file name that a re-ingested record writes through</li>
  *   <li>{@code MasterVenueExternal} — one provider identity of a master venue, a row of
  *       {@code public.master_venue_external}</li>
  *   <li>{@code MasterVenueExternalMapper} and

@@ -35,6 +35,26 @@
         #{fileName}, #{contentType}, #{sizeBytes}, #{s3Key}, #{sourceUrl}, #{provider})
     </insert>
 
+    <insert id="upsertByVenueAndFileName" parameterType="com.iqkv.docintelligence.venue.MasterVenueAsset">
+        INSERT INTO public.master_venue_asset
+        (id, master_venue_id, asset_type, photo_category, display_order, label, file_name,
+        content_type, size_bytes, s3_key, source_url, provider)
+        VALUES
+        (#{id}, #{masterVenueId}, #{assetType}, #{photoCategory}, #{displayOrder}, #{label},
+        #{fileName}, #{contentType}, #{sizeBytes}, #{s3Key}, #{sourceUrl}, #{provider})
+        ON CONFLICT (master_venue_id, file_name) DO UPDATE
+        SET asset_type = EXCLUDED.asset_type,
+        photo_category = EXCLUDED.photo_category,
+        display_order = EXCLUDED.display_order,
+        label = EXCLUDED.label,
+        content_type = EXCLUDED.content_type,
+        size_bytes = EXCLUDED.size_bytes,
+        s3_key = EXCLUDED.s3_key,
+        source_url = EXCLUDED.source_url,
+        provider = EXCLUDED.provider,
+        updated_at = NOW()
+    </insert>
+
     <update id="update" parameterType="com.iqkv.docintelligence.venue.MasterVenueAsset">
         UPDATE public.master_venue_asset
         SET master_venue_id = #{masterVenueId},
@@ -66,6 +86,13 @@
         SELECT <include refid="masterVenueAssetColumns"/>
         FROM public.master_venue_asset
         WHERE id = #{id}
+    </select>
+
+    <select id="findByVenueAndFileName" resultMap="masterVenueAssetResultMap">
+        SELECT <include refid="masterVenueAssetColumns"/>
+        FROM public.master_venue_asset
+        WHERE master_venue_id = #{masterVenueId}
+        AND file_name = #{fileName}
     </select>
 
     <select id="findByMasterVenueId" resultMap="masterVenueAssetResultMap">
