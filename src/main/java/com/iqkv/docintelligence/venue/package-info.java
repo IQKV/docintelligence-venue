@@ -33,12 +33,19 @@
  *       {@code public.master_venue_asset}</li>
  *   <li>{@code MasterVenueAssetMapper} and {@code mappers/venue/MasterVenueAssetMapper.xml} —
  *       MyBatis reads and writes for the master venue assets</li>
+ *   <li>{@code MasterVenueExternal} — one provider identity of a master venue, a row of
+ *       {@code public.master_venue_external}</li>
+ *   <li>{@code MasterVenueExternalMapper} and
+ *       {@code mappers/venue/MasterVenueExternalMapper.xml} — MyBatis reads and writes for the
+ *       external venue identities, including the upsert that
+ *       {@code MasterVenueMapper#upsertWithExternalIdentity} builds on</li>
  * </ul>
  *
  * <h2>What Stays Out</h2>
  * <p>No Spring beans, no REST resources and no business services. The HTTP surface, the DTO
  * payload shapes and the Liquibase changelogs stay in {@code docintelligence-catalog-service},
- * which owns the DDL for {@code public.master_venue} and {@code public.master_venue_asset}.
+ * which owns the DDL for {@code public.master_venue}, {@code public.master_venue_external} and
+ * {@code public.master_venue_asset}.
  * Write ownership of
  * {@code public.master_venue}, {@code public.master_venue_alias},
  * {@code public.master_venue_external} and {@code public.master_venue_asset} belongs to

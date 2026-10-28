@@ -46,6 +46,53 @@
         WHERE id = #{id}
     </delete>
 
+    <!-- Both tables move in one statement, so an interrupted or re-delivered scrape cannot bind
+         an identity to a venue that was never written. The external upsert runs first and yields
+         the venue id the identity resolves to: the existing one on a known identity (the DO
+         UPDATE deliberately leaves master_venue_id alone), the candidate one otherwise. The
+         master_venue row is then upserted on that id, and the foreign key from
+         master_venue_external is satisfied by the time the statement ends.
+
+         Declared as a select because PostgreSQL returns the written row; flushCache is on so a
+         session cache can never answer a write. -->
+    <select id="upsertWithExternalIdentity" resultMap="masterVenueResultMap" flushCache="true">
+        WITH upserted_external AS (
+        INSERT INTO public.master_venue_external
+        (id, master_venue_id, provider, provider_external_id, raw_payload, confidence, crawled_at)
+        VALUES
+        (#{external.id}, #{venue.id}, #{external.provider}, #{external.providerExternalId},
+        #{external.rawPayload, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.JsonTypeHandler},
+        #{external.confidence}, #{external.crawledAt})
+        ON CONFLICT (provider, provider_external_id)
+        DO UPDATE SET
+        raw_payload = EXCLUDED.raw_payload,
+        confidence = EXCLUDED.confidence,
+        crawled_at = EXCLUDED.crawled_at
+        RETURNING master_venue_id
+        )
+        INSERT INTO public.master_venue
+        (id, name, address, city, location_lat, location_lng, metadata, confidence, source)
+        SELECT
+        upserted_external.master_venue_id, #{venue.name}, #{venue.address}, #{venue.city},
+        #{venue.locationLat}, #{venue.locationLng},
+        #{venue.metadata, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.JsonTypeHandler},
+        #{venue.confidence}, #{venue.source}
+        FROM upserted_external
+        ON CONFLICT (id)
+        DO UPDATE SET
+        name = EXCLUDED.name,
+        address = EXCLUDED.address,
+        city = EXCLUDED.city,
+        location_lat = EXCLUDED.location_lat,
+        location_lng = EXCLUDED.location_lng,
+        metadata = EXCLUDED.metadata,
+        confidence = EXCLUDED.confidence,
+        source = EXCLUDED.source,
+        updated_at = NOW()
+        RETURNING id, name, address, city, location_lat, location_lng, metadata, confidence, source,
+        created_at, updated_at
+    </select>
+
     <select id="findById" resultMap="masterVenueResultMap">
         SELECT id, name, address, city, location_lat, location_lng, metadata, confidence, source,
         created_at, updated_at

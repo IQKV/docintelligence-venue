@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iqkv.docintelligence.venue.MasterVenueExternalMapper">
+
+    <resultMap id="masterVenueExternalResultMap"
+               type="com.iqkv.docintelligence.venue.MasterVenueExternal">
+        <id property="id" column="id"/>
+        <result property="masterVenueId" column="master_venue_id"/>
+        <result property="provider" column="provider"/>
+        <result property="providerExternalId" column="provider_external_id"/>
+        <result property="rawPayload" column="raw_payload"/>
+        <result property="confidence" column="confidence"/>
+        <result property="crawledAt" column="crawled_at"/>
+    </resultMap>
+
+    <sql id="masterVenueExternalColumns">
+        id, master_venue_id, provider, provider_external_id, raw_payload, confidence, crawled_at
+    </sql>
+
+    <insert id="upsert" parameterType="com.iqkv.docintelligence.venue.MasterVenueExternal">
+        INSERT INTO public.master_venue_external
+        (id, master_venue_id, provider, provider_external_id, raw_payload, confidence, crawled_at)
+        VALUES
+        (#{id}, #{masterVenueId}, #{provider}, #{providerExternalId},
+        #{rawPayload, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.JsonTypeHandler},
+        #{confidence}, #{crawledAt})
+        ON CONFLICT (provider, provider_external_id)
+        DO UPDATE SET
+        <!-- master_venue_id is deliberately absent: the first match owns the identity. -->
+        raw_payload = EXCLUDED.raw_payload,
+        confidence = EXCLUDED.confidence,
+        crawled_at = EXCLUDED.crawled_at
+    </insert>
+
+    <select id="findByProviderExternalId" resultMap="masterVenueExternalResultMap">
+        SELECT <include refid="masterVenueExternalColumns"/>
+        FROM public.master_venue_external
+        WHERE provider = #{provider}
+        AND provider_external_id = #{providerExternalId}
+    </select>
+
+</mapper>

@@ -36,10 +36,13 @@ src/main/java/com/iqkv/docintelligence/venue/
 ├── MasterVenueMapper.java        # MyBatis reads and writes for public.master_venue
 ├── MasterVenueAsset.java         # One asset of a master venue — public.master_venue_asset
 ├── MasterVenueAssetMapper.java   # MyBatis reads and writes for public.master_venue_asset
+├── MasterVenueExternal.java # One provider identity of a master venue — public.master_venue_external
+├── MasterVenueExternalMapper.java # MyBatis reads and writes for public.master_venue_external
 
 src/main/resources/mappers/venue/
 ├── MasterVenueMapper.xml         # Statements behind MasterVenueMapper — ships in the jar
-└── MasterVenueAssetMapper.xml    # Statements behind MasterVenueAssetMapper — ships in the jar
+├── MasterVenueAssetMapper.xml    # Statements behind MasterVenueAssetMapper — ships in the jar
+└── MasterVenueExternalMapper.xml # Statements behind MasterVenueExternalMapper — ships in the jar
 ```
 
 Tenant-scoped types (`Venue`, `VenueAsset`, `VenueMetadata`) land in the same flat `venue` package, not in a `tenant/` sub-package.

@@ -34,7 +34,8 @@ import org.apache.ibatis.annotations.Param;
  * inside this artifact; consumers pick it up through their existing
  * {@code classpath*:mappers/} scan. Write ownership of the table belongs to
  * {@code docintelligence-master-venue-worker} — a consumer that only reads must not call
- * {@link #insert(MasterVenue)}, {@link #update(MasterVenue)} or {@link #deleteById(UUID)}.
+ * {@link #insert(MasterVenue)}, {@link #update(MasterVenue)}, {@link #deleteById(UUID)} or
+ * {@link #upsertWithExternalIdentity(MasterVenue, MasterVenueExternal)}.
  */
 @Mapper
 public interface MasterVenueMapper {
@@ -44,6 +45,27 @@ public interface MasterVenueMapper {
   void update(MasterVenue venue);
 
   void deleteById(@Param("id") UUID id);
+
+  /**
+   * Upserts the venue together with the external identity it arrives under, in one statement.
+   *
+   * <p>The identity decides which row is written: on a known
+   * {@code (provider, providerExternalId)} pair the upsert lands on the venue that identity
+   * already resolves to, so {@code venue.getId()} is only honoured when the identity is new.
+   * The venue columns and {@code updated_at} are refreshed either way, and the row that was
+   * written — with the ids and timestamps as stored — comes back, so a caller that resolved an
+   * existing venue through this call learns its id.
+   *
+   * <p>Executed as a query rather than an insert because PostgreSQL returns the row
+   * ({@code INSERT … RETURNING}); both tables are written in a single statement, so a
+   * re-delivered scrape cannot leave the identity and the venue row disagreeing.
+   *
+   * @param venue    the venue fields to write; {@code id} is the candidate id for a new identity
+   * @param external the provider identity to bind the venue to, with its raw payload
+   * @return the master venue of record after the upsert
+   */
+  MasterVenue upsertWithExternalIdentity(@Param("venue") MasterVenue venue,
+                                         @Param("external") MasterVenueExternal external);
 
   Optional<MasterVenue> findById(@Param("id") UUID id);
 
