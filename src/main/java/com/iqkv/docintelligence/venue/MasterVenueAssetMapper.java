@@ -65,4 +65,14 @@ public interface MasterVenueAssetMapper {
    * @return the venue's assets, ordered by display order
    */
   List<MasterVenueAsset> findByMasterVenueId(@Param("masterVenueId") UUID masterVenueId);
+
+  /**
+   * The photos of one venue — the subset of {@link #findByMasterVenueId(UUID)} whose
+   * {@code asset_type} is {@code PHOTO}, in the same display order. Never {@code null}; an
+   * unknown venue or a venue without photos yields an empty list.
+   *
+   * @param masterVenueId the owning venue
+   * @return the venue's photos, ordered by display order
+   */
+  List<MasterVenueAsset> findPhotosByMasterVenueId(@Param("masterVenueId") UUID masterVenueId);
 }

@@ -75,4 +75,12 @@
         ORDER BY display_order, id
     </select>
 
+    <select id="findPhotosByMasterVenueId" resultMap="masterVenueAssetResultMap">
+        SELECT <include refid="masterVenueAssetColumns"/>
+        FROM public.master_venue_asset
+        WHERE master_venue_id = #{masterVenueId}
+        AND asset_type = 'PHOTO'
+        ORDER BY display_order, id
+    </select>
+
 </mapper>
