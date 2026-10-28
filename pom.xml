@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.iqkv</groupId>
     <artifactId>docintelligence-venue</artifactId>
-    <version>0.24.1-SNAPSHOT</version>
+    <version>0.24.2-SNAPSHOT</version>
     <name>Document Intelligence Venue</name>
     <description>Shared venue domain model and MyBatis persistence for the DocIntelligence services.</description>
     <url>https://github.com/IQKV/docintelligence-venue</url>
