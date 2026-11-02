@@ -42,6 +42,8 @@ public class MasterVenue {
   private String metadata;
   private BigDecimal confidence;
   private String source;
+  /** Denormalised URL of the first photo (display_order = 0); null when no photos exist. */
+  private String primaryPhotoUrl;
   private Instant createdAt;
   private Instant updatedAt;
 
@@ -115,6 +117,14 @@ public class MasterVenue {
 
   public void setSource(final String source) {
     this.source = source;
+  }
+
+  public String getPrimaryPhotoUrl() {
+    return primaryPhotoUrl;
+  }
+
+  public void setPrimaryPhotoUrl(final String primaryPhotoUrl) {
+    this.primaryPhotoUrl = primaryPhotoUrl;
   }
 
   public Instant getCreatedAt() {
