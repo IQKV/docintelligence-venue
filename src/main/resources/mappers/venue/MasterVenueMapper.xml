@@ -15,17 +15,20 @@
         <result property="confidence" column="confidence"/>
         <result property="source" column="source"/>
         <result property="primaryPhotoUrl" column="primary_photo_url"/>
+        <result property="embedding" column="embedding"
+                typeHandler="com.iqkv.foundation.mybatis.util.PgVectorTypeHandler"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.iqkv.docintelligence.venue.MasterVenue">
         INSERT INTO public.master_venue
-        (id, name, address, city, location_lat, location_lng, metadata, confidence, source, primary_photo_url)
+        (id, name, address, city, location_lat, location_lng, metadata, confidence, source, primary_photo_url, embedding)
         VALUES
         (#{id}, #{name}, #{address}, #{city}, #{locationLat}, #{locationLng},
         #{metadata, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.JsonTypeHandler},
-        #{confidence}, #{source}, #{primaryPhotoUrl})
+        #{confidence}, #{source}, #{primaryPhotoUrl},
+        #{embedding, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.PgVectorTypeHandler})
     </insert>
 
     <update id="update" parameterType="com.iqkv.docintelligence.venue.MasterVenue">
@@ -39,6 +42,7 @@
         confidence = #{confidence},
         source = #{source},
         primary_photo_url = #{primaryPhotoUrl},
+        embedding = #{embedding, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.PgVectorTypeHandler},
         updated_at = NOW()
         WHERE id = #{id}
     </update>
@@ -73,12 +77,13 @@
         RETURNING master_venue_id
         )
         INSERT INTO public.master_venue
-        (id, name, address, city, location_lat, location_lng, metadata, confidence, source, primary_photo_url)
+        (id, name, address, city, location_lat, location_lng, metadata, confidence, source, primary_photo_url, embedding)
         SELECT
         upserted_external.master_venue_id, #{venue.name}, #{venue.address}, #{venue.city},
         #{venue.locationLat}, #{venue.locationLng},
         #{venue.metadata, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.JsonTypeHandler},
-        #{venue.confidence}, #{venue.source}, #{venue.primaryPhotoUrl}
+        #{venue.confidence}, #{venue.source}, #{venue.primaryPhotoUrl},
+        #{venue.embedding, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.PgVectorTypeHandler}
         FROM upserted_external
         ON CONFLICT (id)
         DO UPDATE SET
@@ -91,21 +96,22 @@
         confidence = EXCLUDED.confidence,
         source = EXCLUDED.source,
         primary_photo_url = EXCLUDED.primary_photo_url,
+        embedding = EXCLUDED.embedding,
         updated_at = NOW()
         RETURNING id, name, address, city, location_lat, location_lng, metadata, confidence, source,
-        primary_photo_url, created_at, updated_at
+        primary_photo_url, embedding, created_at, updated_at
     </select>
 
     <select id="findById" resultMap="masterVenueResultMap">
         SELECT id, name, address, city, location_lat, location_lng, metadata, confidence, source,
-        primary_photo_url, created_at, updated_at
+        primary_photo_url, embedding, created_at, updated_at
         FROM public.master_venue
         WHERE id = #{id}
     </select>
 
     <select id="findAll" resultMap="masterVenueResultMap">
         SELECT id, name, address, city, location_lat, location_lng, metadata, confidence, source,
-        primary_photo_url, created_at, updated_at
+        primary_photo_url, embedding, created_at, updated_at
         FROM public.master_venue
         ORDER BY name
         LIMIT #{limit} OFFSET #{offset}
@@ -118,7 +124,7 @@
 
     <select id="findByNameIgnoreCase" resultMap="masterVenueResultMap">
         SELECT id, name, address, city, location_lat, location_lng, metadata, confidence, source,
-        primary_photo_url, created_at, updated_at
+        primary_photo_url, embedding, created_at, updated_at
         FROM public.master_venue
         WHERE LOWER(name) = LOWER(#{name})
         ORDER BY name
@@ -139,7 +145,7 @@
 
     <select id="search" resultMap="masterVenueResultMap">
         SELECT id, name, address, city, location_lat, location_lng, metadata, confidence, source,
-        primary_photo_url, created_at, updated_at
+        primary_photo_url, embedding, created_at, updated_at
         FROM public.master_venue
         <include refid="masterVenueSearchFilters"/>
         ORDER BY name
@@ -150,6 +156,25 @@
         SELECT COUNT(*)
         FROM public.master_venue
         <include refid="masterVenueSearchFilters"/>
+    </select>
+
+    <!-- Sets the embedding for one venue without touching any other field.
+         Used by the embedding service and the ingestion worker. -->
+    <update id="updateEmbedding">
+        UPDATE public.master_venue
+        SET embedding = #{embedding, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.PgVectorTypeHandler},
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- Returns IDs of venues whose embedding column is still NULL.
+         Ordered by created_at so the backfill runs oldest-first. -->
+    <select id="findUnembeddedIds" resultType="java.util.UUID">
+        SELECT id
+        FROM public.master_venue
+        WHERE embedding IS NULL
+        ORDER BY created_at
+        LIMIT #{limit}
     </select>
 
 </mapper>

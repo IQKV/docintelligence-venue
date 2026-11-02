@@ -44,6 +44,11 @@ public class MasterVenue {
   private String source;
   /** Denormalised URL of the first photo (display_order = 0); null when no photos exist. */
   private String primaryPhotoUrl;
+  /**
+   * pgvector embedding of the venue's searchable text fields; null when not yet embedded.
+   * Dimension must match the configured Ollama embedding model (nomic-embed-text → 768).
+   */
+  private float[] embedding;
   private Instant createdAt;
   private Instant updatedAt;
 
@@ -125,6 +130,14 @@ public class MasterVenue {
 
   public void setPrimaryPhotoUrl(final String primaryPhotoUrl) {
     this.primaryPhotoUrl = primaryPhotoUrl;
+  }
+
+  public float[] getEmbedding() {
+    return embedding;
+  }
+
+  public void setEmbedding(final float[] embedding) {
+    this.embedding = embedding;
   }
 
   public Instant getCreatedAt() {

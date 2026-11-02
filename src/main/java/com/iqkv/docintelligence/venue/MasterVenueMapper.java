@@ -107,4 +107,23 @@ public interface MasterVenueMapper {
    * @return total number of matching venues
    */
   long countSearch(@Param("search") String search, @Param("city") String city);
+
+  /**
+   * Sets the {@code embedding} column for a single venue without touching any other field.
+   * Intended for use by the embedding service and the ingestion worker.
+   *
+   * @param id        the venue UUID
+   * @param embedding the embedding vector produced by the model
+   */
+  void updateEmbedding(@Param("id") UUID id, @Param("embedding") float[] embedding);
+
+  /**
+   * Returns the UUIDs of venues whose {@code embedding} column is still {@code NULL},
+   * ordered by {@code created_at} ascending (oldest-first), up to {@code limit} rows.
+   * Used by the backfill scheduler.
+   *
+   * @param limit maximum number of IDs to return
+   * @return list of unembedded venue UUIDs, never {@code null}
+   */
+  List<UUID> findUnembeddedIds(@Param("limit") int limit);
 }
