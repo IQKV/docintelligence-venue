@@ -96,7 +96,7 @@
         confidence = EXCLUDED.confidence,
         source = EXCLUDED.source,
         primary_photo_url = EXCLUDED.primary_photo_url,
-        embedding = EXCLUDED.embedding,
+        embedding = COALESCE(EXCLUDED.embedding, master_venue.embedding),
         updated_at = NOW()
         RETURNING id, name, address, city, location_lat, location_lng, metadata, confidence, source,
         primary_photo_url, embedding, created_at, updated_at
