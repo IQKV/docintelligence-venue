@@ -104,7 +104,7 @@ List<MasterVenue> findAll(@Param("limit") int limit, @Param("offset") int offset
 - Read the call sites in all three consumers before changing a shared type — one edit compiles in three services.
 - A mapper interface change without its XML statement, or the reverse, is an incomplete change — apply both or neither.
 - Type handlers come from `foundation-mybatis-util`; they are registered by class in each service's `MyBatisConfig`, so a handler rename reaches all three registrations.
-- Never add a PostgreSQL driver dependency to make a handler compile — the handlers bind through `Types.OTHER` on purpose.
+- Never add a PostgreSQL driver dependency here to make a handler compile — `foundation-mybatis-util` already carries it as `optional`. Its handlers bind PostgreSQL-native values by wrapping them in a `PGobject` of the target type (`jsonb`, `vector`); the `jdbcType=OTHER` in the mapper XML only declares the parameter's JDBC type, it is not what selects the driver type.
 - After two identical build failures without new evidence, change approach — do not retry blindly.
 - Run `./mvnw verify -Djacoco.skip=false` to include coverage gates when touching model or handler classes.
 
