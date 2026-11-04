@@ -9,9 +9,9 @@
 - Java 25, single Maven module, parent `com.iqkv:boot-parent-pom`
 - One flat package per bounded context — `com.iqkv.docintelligence.venue`; the context is carried by the type name (`MasterVenue` = platform table, `Venue` = tenant table), not by a sub-package
 - Model classes plus the mapper interface and its XML — no services, no Spring beans
-- `com.iqkv:foundation-mybatis-util` provides the JSON/JSONB and UUID type handlers the mapper XML references; MyBatis itself is `optional` — every consumer already provides it
+- `com.iqkv:foundation-mybatis-util` provides the PostgreSQL-native type handlers (JSONB, `vector`, `text[]`, UUID); the mapper XML names the ones it needs by class name. MyBatis itself is `optional` — every consumer already provides it
 - Mapper XML ships in the jar; consumers resolve it through their existing `classpath*:mappers/` scan
-- ArchUnit tests verify package structure
+- No test sources — `./mvnw verify` compiles, runs Checkstyle and packages only
 - Checkstyle enforced at `validate` phase via `com.iqkv:checkstyle-config`
 - JaCoCo: ≥ 90% instruction + line + branch coverage per class (`jacoco.skip=true` by default; CI enables it)
 

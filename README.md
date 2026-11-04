@@ -31,7 +31,7 @@ A change to a shared type compiles in all three at once.
 ## Tech Stack
 
 - Java 25
-- `com.iqkv:foundation-mybatis-util` (JSON/JSONB and UUID type handlers)
+- `com.iqkv:foundation-mybatis-util` (JSONB, vector, `text[]` and UUID type handlers)
 - MyBatis (`optional` runtime — every consumer already provides it)
 - Maven 3.9+
 
