@@ -148,7 +148,12 @@
         primary_photo_url, embedding, created_at, updated_at
         FROM public.master_venue
         <include refid="masterVenueSearchFilters"/>
-        ORDER BY name
+        ORDER BY
+        <choose>
+            <when test="sortBy == 'name' and sortDir == 'desc'">name DESC</when>
+            <when test="sortBy == 'name'">name ASC</when>
+            <otherwise>created_at DESC</otherwise>
+        </choose>
         LIMIT #{limit} OFFSET #{offset}
     </select>
 

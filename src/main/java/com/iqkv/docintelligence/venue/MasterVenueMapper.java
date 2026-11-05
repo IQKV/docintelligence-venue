@@ -87,20 +87,28 @@ public interface MasterVenueMapper {
    *
    * <p>Both filters are optional: a {@code null} or blank value drops that predicate.
    * The keyword is matched case-insensitively against name, address and city.
+   * When {@code sortBy} is {@code "name"} the results are ordered by name in the direction
+   * given by {@code sortDir} ({@code "asc"} or {@code "desc"}); any other value, including
+   * {@code null}, falls back to {@code created_at DESC} (recently added first).
    *
-   * @param search free-text keyword matched against name, address and city; nullable
-   * @param city   exact city filter, compared case-insensitively; nullable
-   * @param limit  maximum number of rows to return
-   * @param offset zero-based row offset
-   * @return matching venues ordered by name
+   * @param search  free-text keyword matched against name, address and city; nullable
+   * @param city    exact city filter, compared case-insensitively; nullable
+   * @param sortBy  optional sort field — {@code "name"} or {@code null} for default
+   * @param sortDir optional sort direction — {@code "asc"} or {@code "desc"}; nullable
+   * @param limit   maximum number of rows to return
+   * @param offset  zero-based row offset
+   * @return matching venues ordered by the requested sort, falling back to recently added
    */
   List<MasterVenue> search(@Param("search") String search,
                            @Param("city") String city,
+                           @Param("sortBy") String sortBy,
+                           @Param("sortDir") String sortDir,
                            @Param("limit") int limit,
                            @Param("offset") int offset);
 
   /**
-   * Counts the rows {@link #search(String, String, int, int)} would return for the same filters.
+   * Counts the rows {@link #search(String, String, String, String, int, int)} would return
+   * for the same filters.
    *
    * @param search free-text keyword; nullable
    * @param city   exact city filter; nullable
