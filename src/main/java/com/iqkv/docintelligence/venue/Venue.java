@@ -49,6 +49,11 @@ public class Venue {
    * Optional app-level FK to {@code public.master_venue.id}; {@code null} when not linked.
    */
   private UUID masterVenueId;
+  /**
+   * pgvector embedding of the venue's searchable text fields; {@code null} when not yet embedded.
+   * Dimension must match the configured Ollama embedding model (nomic-embed-text → 768).
+   */
+  private float[] embedding;
   private Instant createdAt;
   private Instant updatedAt;
 
@@ -130,6 +135,14 @@ public class Venue {
 
   public void setMasterVenueId(final UUID masterVenueId) {
     this.masterVenueId = masterVenueId;
+  }
+
+  public float[] getEmbedding() {
+    return embedding;
+  }
+
+  public void setEmbedding(final float[] embedding) {
+    this.embedding = embedding;
   }
 
   public Instant getCreatedAt() {

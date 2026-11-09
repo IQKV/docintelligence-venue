@@ -19,6 +19,8 @@
         <result property="confidence" column="confidence"/>
         <result property="source" column="source"/>
         <result property="masterVenueId" column="master_venue_id"/>
+        <result property="embedding" column="embedding"
+                typeHandler="com.iqkv.foundation.mybatis.util.PgVectorTypeHandler"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
@@ -57,5 +59,57 @@
     <delete id="deleteById">
         DELETE FROM venues WHERE id = #{id}
     </delete>
+
+    <sql id="venueSearchFilters">
+        <where>
+            <if test="search != null and search != ''">
+                AND (LOWER(name) LIKE LOWER(CONCAT('%', #{search}, '%'))
+                OR LOWER(address) LIKE LOWER(CONCAT('%', #{search}, '%'))
+                OR LOWER(city) LIKE LOWER(CONCAT('%', #{search}, '%')))
+            </if>
+            <if test="city != null and city != ''">
+                AND LOWER(city) = LOWER(#{city})
+            </if>
+        </where>
+    </sql>
+
+    <select id="search" resultMap="venueResultMap">
+        SELECT id, name, address, city, location_lat, location_lng, metadata, confidence, source,
+        master_venue_id, created_at, updated_at
+        FROM venues
+        <include refid="venueSearchFilters"/>
+        ORDER BY
+        <choose>
+            <when test="sortBy == 'name' and sortDir == 'desc'">name DESC</when>
+            <when test="sortBy == 'name'">name ASC</when>
+            <otherwise>created_at DESC</otherwise>
+        </choose>
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countSearch" resultType="long">
+        SELECT COUNT(*)
+        FROM venues
+        <include refid="venueSearchFilters"/>
+    </select>
+
+    <!-- Sets the embedding for one venue without touching any other field.
+         Used by the embedding service and the backfill scheduler. -->
+    <update id="updateEmbedding">
+        UPDATE venues
+        SET embedding = #{embedding, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.PgVectorTypeHandler},
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- Returns IDs of venues whose embedding column is still NULL.
+         Ordered by created_at so the backfill runs oldest-first. -->
+    <select id="findUnembeddedIds" resultType="java.util.UUID">
+        SELECT id
+        FROM venues
+        WHERE embedding IS NULL
+        ORDER BY created_at
+        LIMIT #{limit}
+    </select>
 
 </mapper>
