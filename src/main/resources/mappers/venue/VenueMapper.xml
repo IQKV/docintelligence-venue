@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iqkv.docintelligence.venue.VenueMapper">
+
+    <!-- Tenant-scoped: statements are unqualified by schema. The MyBatisSchemaInterceptor in each
+         consuming service sets search_path to t_{tenantKey}, public before every statement, so
+         'venues' resolves to the active tenant schema. -->
+
+    <resultMap id="venueResultMap"
+               type="com.iqkv.docintelligence.venue.Venue">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="address" column="address"/>
+        <result property="city" column="city"/>
+        <result property="locationLat" column="location_lat"/>
+        <result property="locationLng" column="location_lng"/>
+        <result property="metadata" column="metadata"/>
+        <result property="confidence" column="confidence"/>
+        <result property="source" column="source"/>
+        <result property="masterVenueId" column="master_venue_id"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.iqkv.docintelligence.venue.Venue">
+        INSERT INTO venues
+        (id, name, address, city, location_lat, location_lng, metadata, confidence, source, master_venue_id)
+        VALUES
+        (#{id}, #{name}, #{address}, #{city}, #{locationLat}, #{locationLng},
+        #{metadata, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.JsonTypeHandler},
+        #{confidence}, #{source}, #{masterVenueId})
+    </insert>
+
+    <select id="findById" resultMap="venueResultMap">
+        SELECT id, name, address, city, location_lat, location_lng, metadata, confidence,
+               source, master_venue_id, created_at, updated_at
+        FROM venues
+        WHERE id = #{id}
+    </select>
+
+    <update id="update" parameterType="com.iqkv.docintelligence.venue.Venue">
+        UPDATE venues
+        SET name = #{name},
+        address = #{address},
+        city = #{city},
+        location_lat = #{locationLat},
+        location_lng = #{locationLng},
+        metadata = #{metadata, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.JsonTypeHandler},
+        confidence = #{confidence},
+        source = #{source},
+        master_venue_id = #{masterVenueId},
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM venues WHERE id = #{id}
+    </delete>
+
+</mapper>
