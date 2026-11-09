@@ -45,7 +45,9 @@ public class Venue {
   private String metadata;
   private BigDecimal confidence;
   private String source;
-  /** Optional app-level FK to {@code public.master_venue.id}; {@code null} when not linked. */
+  /**
+   * Optional app-level FK to {@code public.master_venue.id}; {@code null} when not linked.
+   */
   private UUID masterVenueId;
   private Instant createdAt;
   private Instant updatedAt;

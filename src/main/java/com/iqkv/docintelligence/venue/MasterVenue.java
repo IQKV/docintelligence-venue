@@ -42,7 +42,9 @@ public class MasterVenue {
   private String metadata;
   private BigDecimal confidence;
   private String source;
-  /** Denormalised URL of the first photo (display_order = 0); null when no photos exist. */
+  /**
+   * Denormalised URL of the first photo (display_order = 0); null when no photos exist.
+   */
   private String primaryPhotoUrl;
   /**
    * pgvector embedding of the venue's searchable text fields; null when not yet embedded.
