@@ -21,7 +21,7 @@
  * and tenant-scoped types live side by side, and the context is carried by the type name rather
  * than by a sub-package. {@code MasterVenue} is a row of the platform-level
  * {@code public.master_venue} reference dataset; the tenant-scoped types ({@code Venue},
- * {@code VenueDocument}) read and write a tenant schema
+ * {@code VenueAsset}) read and write a tenant schema
  * ({@code t_{tenantKey}}).
  *
  * <h2>Main Components</h2>
@@ -43,9 +43,10 @@
  *   <li>{@code Venue} — one row of the tenant-scoped {@code venues} table (the tenant-owned
  *       counterpart of {@code MasterVenue}, with an optional {@code masterVenueId} relation key);
  *       {@code VenueMapper} and {@code mappers/venue/VenueMapper.xml} back it</li>
- *   <li>{@code VenueDocument} — one row of the tenant-scoped {@code venue_documents} table (a
- *       venue deck uploaded via the two-phase presigned flow, with an upload lifecycle status);
- *       {@code VenueDocumentMapper} and {@code mappers/venue/VenueDocumentMapper.xml} back it</li>
+ *   <li>{@code VenueAsset} — one asset of a tenant venue, a row of the tenant-scoped
+ *       {@code venue_assets} table (a photo or document uploaded via the two-phase presigned
+ *       flow); the tenant counterpart of {@code MasterVenueAsset};
+ *       {@code VenueAssetMapper} and {@code mappers/venue/VenueAssetMapper.xml} back it</li>
  * </ul>
  *
  * <h2>What Stays Out</h2>

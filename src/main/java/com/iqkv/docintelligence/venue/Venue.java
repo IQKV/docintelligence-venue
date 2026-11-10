@@ -50,6 +50,10 @@ public class Venue {
    */
   private UUID masterVenueId;
   /**
+   * Denormalised URL of the venue's primary photo; {@code null} when the venue has no photos.
+   */
+  private String primaryPhotoUrl;
+  /**
    * pgvector embedding of the venue's searchable text fields; {@code null} when not yet embedded.
    * Dimension must match the configured Ollama embedding model (nomic-embed-text → 768).
    */
@@ -135,6 +139,14 @@ public class Venue {
 
   public void setMasterVenueId(final UUID masterVenueId) {
     this.masterVenueId = masterVenueId;
+  }
+
+  public String getPrimaryPhotoUrl() {
+    return primaryPhotoUrl;
+  }
+
+  public void setPrimaryPhotoUrl(final String primaryPhotoUrl) {
+    this.primaryPhotoUrl = primaryPhotoUrl;
   }
 
   public float[] getEmbedding() {

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iqkv.docintelligence.venue.VenueAssetMapper">
+
+    <!-- Tenant-scoped: statements are unqualified by schema. The MyBatisSchemaInterceptor in each
+         consuming service sets search_path to t_{tenantKey}, public before every statement, so
+         'venue_assets' resolves to the active tenant schema. -->
+
+    <resultMap id="venueAssetResultMap"
+               type="com.iqkv.docintelligence.venue.VenueAsset">
+        <id property="id" column="id"/>
+        <result property="venueId" column="venue_id"/>
+        <result property="assetType" column="asset_type"/>
+        <result property="photoCategory" column="photo_category"/>
+        <result property="displayOrder" column="display_order"/>
+        <result property="label" column="label"/>
+        <result property="fileName" column="file_name"/>
+        <result property="contentType" column="content_type"/>
+        <result property="sizeBytes" column="size_bytes"/>
+        <result property="s3Key" column="s3_key"/>
+        <result property="uploadedBy" column="uploaded_by"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="venueAssetColumns">
+        id, venue_id, asset_type, photo_category, display_order, label, file_name, content_type,
+        size_bytes, s3_key, uploaded_by, created_at, updated_at
+    </sql>
+
+    <insert id="insert" parameterType="com.iqkv.docintelligence.venue.VenueAsset">
+        INSERT INTO venue_assets
+        (id, venue_id, asset_type, photo_category, display_order, label, file_name, content_type,
+        size_bytes, s3_key, uploaded_by)
+        VALUES
+        (#{id}, #{venueId}, #{assetType}, #{photoCategory}, #{displayOrder}, #{label},
+        #{fileName}, #{contentType}, #{sizeBytes}, #{s3Key}, #{uploadedBy})
+    </insert>
+
+    <select id="findById" resultMap="venueAssetResultMap">
+        SELECT <include refid="venueAssetColumns"/>
+        FROM venue_assets
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByVenueId" resultMap="venueAssetResultMap">
+        SELECT <include refid="venueAssetColumns"/>
+        FROM venue_assets
+        WHERE venue_id = #{venueId}
+        ORDER BY display_order, id
+    </select>
+
+    <select id="findPhotosByVenueId" resultMap="venueAssetResultMap">
+        SELECT <include refid="venueAssetColumns"/>
+        FROM venue_assets
+        WHERE venue_id = #{venueId}
+        AND asset_type = 'PHOTO'
+        ORDER BY display_order, id
+    </select>
+
+</mapper>
