@@ -59,4 +59,8 @@
         ORDER BY display_order, id
     </select>
 
+    <delete id="deleteById">
+        DELETE FROM venue_assets WHERE id = #{id}
+    </delete>
+
 </mapper>

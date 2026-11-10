@@ -59,4 +59,11 @@ public interface VenueAssetMapper {
    * @return the venue's photos, ordered by display order
    */
   List<VenueAsset> findPhotosByVenueId(@Param("venueId") UUID venueId);
+
+  /**
+   * Permanently deletes the asset row with the given id. A no-op when no such row exists.
+   *
+   * @param id the asset to delete
+   */
+  void deleteById(@Param("id") UUID id);
 }
