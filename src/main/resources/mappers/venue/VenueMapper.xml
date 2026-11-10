@@ -105,6 +105,15 @@
         WHERE id = #{id}
     </update>
 
+    <!-- Sets primary_photo_url for one venue without touching any other field.
+         Written by the asset service when the first PHOTO asset is confirmed. -->
+    <update id="updatePrimaryPhotoUrl">
+        UPDATE venues
+        SET primary_photo_url = #{url},
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
     <!-- Returns IDs of venues whose embedding column is still NULL.
          Ordered by created_at so the backfill runs oldest-first. -->
     <select id="findUnembeddedIds" resultType="java.util.UUID">

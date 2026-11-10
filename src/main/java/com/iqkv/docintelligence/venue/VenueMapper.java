@@ -81,6 +81,16 @@ public interface VenueMapper {
   long countSearch(@Param("search") String search, @Param("city") String city);
 
   /**
+   * Sets the {@code primary_photo_url} column for a single venue without touching any other
+   * field. Called by the asset service when the first PHOTO asset is confirmed so the venue list
+   * can render a thumbnail without a separate asset fetch.
+   *
+   * @param id  the venue UUID
+   * @param url the presigned GET URL of the primary photo; {@code null} clears the value
+   */
+  void updatePrimaryPhotoUrl(@Param("id") UUID id, @Param("url") String url);
+
+  /**
    * Sets the {@code embedding} column for a single venue without touching any other field.
    * Intended for use by the embedding service and the backfill scheduler.
    *
