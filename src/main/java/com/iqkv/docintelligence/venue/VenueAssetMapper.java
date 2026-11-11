@@ -61,6 +61,27 @@ public interface VenueAssetMapper {
   List<VenueAsset> findPhotosByVenueId(@Param("venueId") UUID venueId);
 
   /**
+   * Sets the processing {@code status} of one asset and, when given, its {@code failureReason}.
+   * Maintains {@code updated_at}. A no-op when no such row exists.
+   *
+   * @param id            the asset to update
+   * @param status        the new status, one of the {@code VenueAsset.STATUS_*} values
+   * @param failureReason the failure cause, or {@code null} to clear it
+   */
+  void updateStatus(@Param("id") UUID id,
+                    @Param("status") String status,
+                    @Param("failureReason") String failureReason);
+
+  /**
+   * Links an asset to the venue the processing worker derived from it and marks the asset
+   * {@code EXTRACTED}. Maintains {@code updated_at}. A no-op when no such row exists.
+   *
+   * @param id      the asset to link
+   * @param venueId the venue derived from the asset
+   */
+  void linkVenue(@Param("id") UUID id, @Param("venueId") UUID venueId);
+
+  /**
    * Permanently deletes the asset row with the given id. A no-op when no such row exists.
    *
    * @param id the asset to delete

@@ -20,22 +20,24 @@
         <result property="sizeBytes" column="size_bytes"/>
         <result property="s3Key" column="s3_key"/>
         <result property="uploadedBy" column="uploaded_by"/>
+        <result property="status" column="status"/>
+        <result property="failureReason" column="failure_reason"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <sql id="venueAssetColumns">
         id, venue_id, asset_type, photo_category, display_order, label, file_name, content_type,
-        size_bytes, s3_key, uploaded_by, created_at, updated_at
+        size_bytes, s3_key, uploaded_by, status, failure_reason, created_at, updated_at
     </sql>
 
     <insert id="insert" parameterType="com.iqkv.docintelligence.venue.VenueAsset">
         INSERT INTO venue_assets
         (id, venue_id, asset_type, photo_category, display_order, label, file_name, content_type,
-        size_bytes, s3_key, uploaded_by)
+        size_bytes, s3_key, uploaded_by, status)
         VALUES
         (#{id}, #{venueId}, #{assetType}, #{photoCategory}, #{displayOrder}, #{label},
-        #{fileName}, #{contentType}, #{sizeBytes}, #{s3Key}, #{uploadedBy})
+        #{fileName}, #{contentType}, #{sizeBytes}, #{s3Key}, #{uploadedBy}, #{status})
     </insert>
 
     <select id="findById" resultMap="venueAssetResultMap">
@@ -58,6 +60,19 @@
         AND asset_type = 'PHOTO'
         ORDER BY display_order, id
     </select>
+
+    <update id="updateStatus">
+        UPDATE venue_assets
+        SET status = #{status}, failure_reason = #{failureReason}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- The processing worker links the venue it derived from the asset; a linked asset is done. -->
+    <update id="linkVenue">
+        UPDATE venue_assets
+        SET venue_id = #{venueId}, status = 'EXTRACTED', failure_reason = NULL, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
 
     <delete id="deleteById">
         DELETE FROM venue_assets WHERE id = #{id}

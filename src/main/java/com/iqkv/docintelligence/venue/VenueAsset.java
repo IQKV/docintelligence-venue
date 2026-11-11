@@ -34,10 +34,31 @@ import java.util.UUID;
  * {@code venue_id} references {@code venues(id)} with {@code ON DELETE CASCADE}, so removing a
  * tenant venue removes its assets.
  *
- * <p>{@code s3Key} is the tenant-scoped S3/MinIO object key and follows the convention
+ * <p>{@code venueId} is optional: a PDF/CSV/image is uploaded first and the venue record is derived
+ * from it by {@code docintelligence-catalog-processing-worker}, so an asset may exist before any
+ * venue and carries {@code null} until the worker links it.
+ *
+ * <p>{@code status} tracks that pipeline: {@code UPLOADED} (confirmed and awaiting the worker),
+ * {@code PARSING} (worker is reading the file), then {@code EXTRACTED} (terminal — the venue is
+ * available, or the asset needs no parsing) or {@code FAILED} (with {@code failureReason} set).
+ *
+ * <p>{@code s3Key} is the tenant-scoped S3/MinIO object key. A venue-less import follows
+ * {@code docintelligence/tenant/{tenantKey}/assets/{assetId}/{fileName}}; an asset attached
+ * directly to a venue follows
  * {@code docintelligence/tenant/{tenantKey}/venues/{venueId}/assets/{assetId}/{fileName}}.
  */
 public class VenueAsset {
+
+  /** Confirmed and awaiting the processing worker. Set by the upload flow. */
+  public static final String STATUS_UPLOADED = "UPLOADED";
+  /** The processing worker is reading the file. */
+  public static final String STATUS_PARSING = "PARSING";
+  /** Terminal success — the venue derived from the asset is available. */
+  public static final String STATUS_EXTRACTED = "EXTRACTED";
+  /**
+   * Terminal failure — {@code failureReason} carries the cause.
+   */
+  public static final String STATUS_FAILED = "FAILED";
 
   private UUID id;
   private UUID venueId;
@@ -50,6 +71,8 @@ public class VenueAsset {
   private Long sizeBytes;
   private String s3Key;
   private UUID uploadedBy;
+  private String status;
+  private String failureReason;
   private Instant createdAt;
   private Instant updatedAt;
 
@@ -139,6 +162,22 @@ public class VenueAsset {
 
   public void setUploadedBy(final UUID uploadedBy) {
     this.uploadedBy = uploadedBy;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(final String status) {
+    this.status = status;
+  }
+
+  public String getFailureReason() {
+    return failureReason;
+  }
+
+  public void setFailureReason(final String failureReason) {
+    this.failureReason = failureReason;
   }
 
   public Instant getCreatedAt() {

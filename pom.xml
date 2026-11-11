@@ -5,11 +5,11 @@
     <parent>
         <groupId>com.iqkv</groupId>
         <artifactId>boot-parent-pom</artifactId>
-        <version>0.24.54</version>
+        <version>0.24.55</version>
     </parent>
     <groupId>com.iqkv</groupId>
     <artifactId>docintelligence-venue</artifactId>
-    <version>0.24.12-SNAPSHOT</version>
+    <version>0.24.13-SNAPSHOT</version>
     <name>Document Intelligence Venue</name>
     <description>Shared venue domain model and MyBatis persistence for the DocIntelligence services.</description>
     <url>https://github.com/IQKV/docintelligence-venue</url>
