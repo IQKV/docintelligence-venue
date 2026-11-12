@@ -19,7 +19,6 @@
         <result property="confidence" column="confidence"/>
         <result property="source" column="source"/>
         <result property="masterVenueId" column="master_venue_id"/>
-        <result property="primaryPhotoUrl" column="primary_photo_url"/>
         <result property="embedding" column="embedding"
                 typeHandler="com.iqkv.foundation.mybatis.util.PgVectorTypeHandler"/>
         <result property="createdAt" column="created_at"/>
@@ -29,16 +28,16 @@
     <insert id="insert" parameterType="com.iqkv.docintelligence.venue.Venue">
         INSERT INTO venues
         (id, name, address, city, location_lat, location_lng, metadata, confidence, source,
-        master_venue_id, primary_photo_url)
+        master_venue_id)
         VALUES
         (#{id}, #{name}, #{address}, #{city}, #{locationLat}, #{locationLng},
         #{metadata, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.JsonTypeHandler},
-        #{confidence}, #{source}, #{masterVenueId}, #{primaryPhotoUrl})
+        #{confidence}, #{source}, #{masterVenueId})
     </insert>
 
     <select id="findById" resultMap="venueResultMap">
         SELECT id, name, address, city, location_lat, location_lng, metadata, confidence,
-               source, master_venue_id, primary_photo_url, created_at, updated_at
+               source, master_venue_id, created_at, updated_at
         FROM venues
         WHERE id = #{id}
     </select>
@@ -54,7 +53,6 @@
         confidence = #{confidence},
         source = #{source},
         master_venue_id = #{masterVenueId},
-        primary_photo_url = #{primaryPhotoUrl},
         updated_at = NOW()
         WHERE id = #{id}
     </update>
@@ -78,7 +76,7 @@
 
     <select id="search" resultMap="venueResultMap">
         SELECT id, name, address, city, location_lat, location_lng, metadata, confidence, source,
-        master_venue_id, primary_photo_url, created_at, updated_at
+        master_venue_id, created_at, updated_at
         FROM venues
         <include refid="venueSearchFilters"/>
         ORDER BY
@@ -101,15 +99,6 @@
     <update id="updateEmbedding">
         UPDATE venues
         SET embedding = #{embedding, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.PgVectorTypeHandler},
-        updated_at = NOW()
-        WHERE id = #{id}
-    </update>
-
-    <!-- Sets primary_photo_url for one venue without touching any other field.
-         Written by the asset service when the first PHOTO asset is confirmed. -->
-    <update id="updatePrimaryPhotoUrl">
-        UPDATE venues
-        SET primary_photo_url = #{url},
         updated_at = NOW()
         WHERE id = #{id}
     </update>
