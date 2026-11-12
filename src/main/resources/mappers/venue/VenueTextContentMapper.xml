@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iqkv.docintelligence.venue.VenueTextContentMapper">
+
+    <!-- Tenant-scoped: statements are unqualified by schema. The MyBatisSchemaInterceptor in each
+         consuming service sets search_path to t_{tenantKey}, public before every statement, so
+         'venue_text_contents' resolves to the active tenant schema. -->
+
+    <resultMap id="venueTextContentResultMap"
+               type="com.iqkv.docintelligence.venue.VenueTextContent">
+        <id property="id" column="id"/>
+        <result property="venueId" column="venue_id"/>
+        <result property="sourceAssetId" column="source_asset_id"/>
+        <result property="content" column="content"/>
+        <result property="embedding" column="embedding"
+                typeHandler="com.iqkv.foundation.mybatis.util.PgVectorTypeHandler"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="venueTextContentColumns">
+        id, venue_id, source_asset_id, content, created_at, updated_at
+    </sql>
+
+    <insert id="insert" parameterType="com.iqkv.docintelligence.venue.VenueTextContent">
+        INSERT INTO venue_text_contents
+        (id, venue_id, source_asset_id, content)
+        VALUES
+        (#{id}, #{venueId}, #{sourceAssetId}, #{content})
+    </insert>
+
+    <select id="findById" resultMap="venueTextContentResultMap">
+        SELECT <include refid="venueTextContentColumns"/>
+        FROM venue_text_contents
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByVenueId" resultMap="venueTextContentResultMap">
+        SELECT <include refid="venueTextContentColumns"/>
+        FROM venue_text_contents
+        WHERE venue_id = #{venueId}
+        ORDER BY created_at ASC
+    </select>
+
+    <select id="findBySourceAssetId" resultMap="venueTextContentResultMap">
+        SELECT <include refid="venueTextContentColumns"/>
+        FROM venue_text_contents
+        WHERE source_asset_id = #{sourceAssetId}
+        ORDER BY created_at ASC
+    </select>
+
+    <select id="findUnlinked" resultMap="venueTextContentResultMap">
+        SELECT <include refid="venueTextContentColumns"/>
+        FROM venue_text_contents
+        WHERE venue_id IS NULL
+        ORDER BY created_at ASC
+        LIMIT #{limit}
+    </select>
+
+    <sql id="venueTextContentSearchFilters">
+        <where>
+            <if test="venueId != null">
+                AND venue_id = #{venueId}
+            </if>
+            <if test="search != null and search != ''">
+                AND LOWER(content) LIKE LOWER(CONCAT('%', #{search}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <select id="search" resultMap="venueTextContentResultMap">
+        SELECT <include refid="venueTextContentColumns"/>
+        FROM venue_text_contents
+        <include refid="venueTextContentSearchFilters"/>
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countSearch" resultType="long">
+        SELECT COUNT(*)
+        FROM venue_text_contents
+        <include refid="venueTextContentSearchFilters"/>
+    </select>
+
+    <update id="updateContent">
+        UPDATE venue_text_contents
+        SET content = #{content}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- Links a text-content row to the venue derived from its source asset. -->
+    <update id="linkVenue">
+        UPDATE venue_text_contents
+        SET venue_id = #{venueId}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- Sets the embedding for one row without touching any other field.
+         Used by the embedding service and the backfill scheduler. -->
+    <update id="updateEmbedding">
+        UPDATE venue_text_contents
+        SET embedding = #{embedding, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.PgVectorTypeHandler},
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- Returns IDs of rows whose embedding column is still NULL.
+         Ordered by created_at so the backfill runs oldest-first. -->
+    <select id="findUnembeddedIds" resultType="java.util.UUID">
+        SELECT id
+        FROM venue_text_contents
+        WHERE embedding IS NULL
+        ORDER BY created_at ASC
+        LIMIT #{limit}
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM venue_text_contents WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByVenueId">
+        DELETE FROM venue_text_contents WHERE venue_id = #{venueId}
+    </delete>
+
+</mapper>
