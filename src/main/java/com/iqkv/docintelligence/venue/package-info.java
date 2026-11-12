@@ -47,6 +47,11 @@
  *       {@code venue_assets} table (a photo or document uploaded via the two-phase presigned
  *       flow); the tenant counterpart of {@code MasterVenueAsset};
  *       {@code VenueAssetMapper} and {@code mappers/venue/VenueAssetMapper.xml} back it</li>
+ *   <li>{@code VenueTextContent} — one chunk of raw or markdown text derived from a source
+ *       document (PDF, CSV, notebook, etc.) and associated with a tenant venue; a row of the
+ *       tenant-scoped {@code venue_text_contents} table; supports semantic search via a
+ *       pgvector {@code embedding} column; {@code VenueTextContentMapper} and
+ *       {@code mappers/venue/VenueTextContentMapper.xml} back it</li>
  * </ul>
  *
  * <h2>What Stays Out</h2>
