@@ -38,6 +38,11 @@ public class Venue {
 
   private UUID id;
   private String name;
+  /**
+   * Brief venue description — the short "About" line shown under the venue name.
+   * Plain text; {@code null} when the venue has no description.
+   */
+  private String description;
   private String address;
   private String city;
   private BigDecimal locationLat;
@@ -71,6 +76,14 @@ public class Venue {
 
   public void setName(final String name) {
     this.name = name;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(final String description) {
+    this.description = description;
   }
 
   public String getAddress() {
