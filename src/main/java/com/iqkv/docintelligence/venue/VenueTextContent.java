@@ -38,6 +38,10 @@ import java.util.UUID;
  * the text was extracted from. No DB-level FK is declared because the asset row may be deleted
  * independently; {@code null} when the content was entered directly.
  *
+ * <p>{@code label} names the text source for humans — a title, or the original file name the text
+ * was extracted from (e.g. {@code venue-menu.pdf}). Optional; {@code null} when the source has no
+ * name.
+ *
  * <p>{@code embedding} holds the pgvector representation of {@code content} for semantic search.
  * {@code null} until the embedding pipeline runs. Dimension must match the configured Ollama
  * embedding model (nomic-embed-text → 768).
@@ -54,6 +58,11 @@ public class VenueTextContent {
    * {@code null} when the content was entered directly or the asset has been deleted.
    */
   private UUID sourceAssetId;
+  /**
+   * Human-readable name of the text source — a title, or the original file name the text was
+   * extracted from; {@code null} when the source has no name.
+   */
+  private String label;
   /**
    * Raw or markdown text content extracted from the source document.
    */
@@ -88,6 +97,14 @@ public class VenueTextContent {
 
   public void setSourceAssetId(final UUID sourceAssetId) {
     this.sourceAssetId = sourceAssetId;
+  }
+
+  public String getLabel() {
+    return label;
+  }
+
+  public void setLabel(final String label) {
+    this.label = label;
   }
 
   public String getContent() {

@@ -12,6 +12,7 @@
         <id property="id" column="id"/>
         <result property="venueId" column="venue_id"/>
         <result property="sourceAssetId" column="source_asset_id"/>
+        <result property="label" column="label"/>
         <result property="content" column="content"/>
         <result property="embedding" column="embedding"
                 typeHandler="com.iqkv.foundation.mybatis.util.PgVectorTypeHandler"/>
@@ -20,14 +21,14 @@
     </resultMap>
 
     <sql id="venueTextContentColumns">
-        id, venue_id, source_asset_id, content, created_at, updated_at
+        id, venue_id, source_asset_id, label, content, created_at, updated_at
     </sql>
 
     <insert id="insert" parameterType="com.iqkv.docintelligence.venue.VenueTextContent">
         INSERT INTO venue_text_contents
-        (id, venue_id, source_asset_id, content)
+        (id, venue_id, source_asset_id, label, content)
         VALUES
-        (#{id}, #{venueId}, #{sourceAssetId}, #{content})
+        (#{id}, #{venueId}, #{sourceAssetId}, #{label}, #{content})
     </insert>
 
     <select id="findById" resultMap="venueTextContentResultMap">
@@ -86,6 +87,12 @@
     <update id="updateContent">
         UPDATE venue_text_contents
         SET content = #{content}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateLabel">
+        UPDATE venue_text_contents
+        SET label = #{label}, updated_at = NOW()
         WHERE id = #{id}
     </update>
 

@@ -116,6 +116,15 @@ public interface VenueTextContentMapper {
   void updateContent(@Param("id") UUID id, @Param("content") String content);
 
   /**
+   * Updates the {@code label} of one row without touching any other field. Maintains
+   * {@code updated_at}. A no-op when no such row exists.
+   *
+   * @param id    the row to update
+   * @param label the new label; may be {@code null} to clear it
+   */
+  void updateLabel(@Param("id") UUID id, @Param("label") String label);
+
+  /**
    * Links one text-content row to a venue. Used by the processing worker after deriving the venue.
    * Maintains {@code updated_at}. A no-op when no such row exists.
    *
