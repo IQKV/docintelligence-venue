@@ -78,4 +78,16 @@
         DELETE FROM venue_assets WHERE id = #{id}
     </delete>
 
+    <select id="countByVenueId" resultType="long">
+        SELECT COUNT(*) FROM venue_assets WHERE venue_id = #{venueId}
+    </select>
+
+    <select id="countPhotosByVenueId" resultType="long">
+        SELECT COUNT(*) FROM venue_assets WHERE venue_id = #{venueId} AND asset_type = 'PHOTO'
+    </select>
+
+    <select id="countDocumentsByVenueId" resultType="long">
+        SELECT COUNT(*) FROM venue_assets WHERE venue_id = #{venueId} AND asset_type != 'PHOTO'
+    </select>
+
 </mapper>

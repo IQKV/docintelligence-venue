@@ -166,4 +166,13 @@ public interface VenueTextContentMapper {
    * @param venueId the venue whose rows to remove
    */
   void deleteByVenueId(@Param("venueId") UUID venueId);
+
+  /**
+   * Total number of text-content rows linked to one venue. Returns {@code 0} when the venue has
+   * no rows or does not exist.
+   *
+   * @param venueId the owning venue
+   * @return source text count for the venue
+   */
+  long countByVenueId(@Param("venueId") UUID venueId);
 }

@@ -82,6 +82,34 @@ public interface VenueAssetMapper {
   void linkVenue(@Param("id") UUID id, @Param("venueId") UUID venueId);
 
   /**
+   * Total number of assets linked to one venue. Returns {@code 0} when the venue has no assets
+   * or does not exist.
+   *
+   * @param venueId the owning venue
+   * @return total asset count for the venue
+   */
+  long countByVenueId(@Param("venueId") UUID venueId);
+
+  /**
+   * Number of assets of type {@code PHOTO} linked to one venue. Returns {@code 0} when the venue
+   * has no photos or does not exist.
+   *
+   * @param venueId the owning venue
+   * @return photo count for the venue
+   */
+  long countPhotosByVenueId(@Param("venueId") UUID venueId);
+
+  /**
+   * Number of assets whose {@code asset_type} is not {@code PHOTO} linked to one venue — the
+   * document and other non-photo assets. Returns {@code 0} when the venue has no such assets or
+   * does not exist.
+   *
+   * @param venueId the owning venue
+   * @return document/non-photo count for the venue
+   */
+  long countDocumentsByVenueId(@Param("venueId") UUID venueId);
+
+  /**
    * Permanently deletes the asset row with the given id. A no-op when no such row exists.
    *
    * @param id the asset to delete

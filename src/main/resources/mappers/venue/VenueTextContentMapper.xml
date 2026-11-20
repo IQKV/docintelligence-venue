@@ -130,4 +130,8 @@
         DELETE FROM venue_text_contents WHERE venue_id = #{venueId}
     </delete>
 
+    <select id="countByVenueId" resultType="long">
+        SELECT COUNT(*) FROM venue_text_contents WHERE venue_id = #{venueId}
+    </select>
+
 </mapper>
