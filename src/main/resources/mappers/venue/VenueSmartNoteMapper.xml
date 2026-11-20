@@ -100,6 +100,12 @@
         WHERE id = #{id}
     </update>
 
+    <update id="updateLinkedAssetId">
+        UPDATE venue_smart_notes
+        SET linked_asset_id = #{linkedAssetId}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
     <delete id="deleteById">
         DELETE FROM venue_smart_notes WHERE id = #{id}
     </delete>

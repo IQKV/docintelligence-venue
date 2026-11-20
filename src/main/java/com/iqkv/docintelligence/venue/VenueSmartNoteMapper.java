@@ -126,6 +126,15 @@ public interface VenueSmartNoteMapper {
   void updatePinned(@Param("id") UUID id, @Param("pinned") boolean pinned);
 
   /**
+   * Updates the optional link to a {@code venue_assets} row without touching any other field.
+   * Maintains {@code updated_at}. A no-op when no such row exists.
+   *
+   * @param id            the note to update
+   * @param linkedAssetId the asset to link to; may be {@code null} to clear the link
+   */
+  void updateLinkedAssetId(@Param("id") UUID id, @Param("linkedAssetId") UUID linkedAssetId);
+
+  /**
    * Permanently deletes the note with the given id. A no-op when no such row exists.
    *
    * @param id the note to delete
