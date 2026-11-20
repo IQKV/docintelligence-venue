@@ -98,7 +98,7 @@ public interface VenueSmartNoteMapper {
    * @param id   the note to update
    * @param tags the new tags; may be {@code null} or empty to clear all tags
    */
-  void updateTags(@Param("id") UUID id, @Param("tags") String[] tags);
+  void updateTags(@Param("id") UUID id, @Param("tags") List<String> tags);
 
   /**
    * Updates the {@code sort_order} of one note without touching any other field.

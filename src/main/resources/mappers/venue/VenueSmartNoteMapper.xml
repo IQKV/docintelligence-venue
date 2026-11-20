@@ -15,7 +15,7 @@
         <result property="content" column="content"/>
         <result property="color" column="color"/>
         <result property="tags" column="tags"
-                typeHandler="com.iqkv.foundation.mybatis.util.PgTextArrayTypeHandler"/>
+                typeHandler="com.iqkv.foundation.mybatis.util.StringArrayTypeHandler"/>
         <result property="authorId" column="author_id"/>
         <result property="linkedAssetId" column="linked_asset_id"/>
         <result property="sortOrder" column="sort_order"/>
@@ -33,7 +33,7 @@
         (id, venue_id, title, content, color, tags, author_id, linked_asset_id, sort_order)
         VALUES
         (#{id}, #{venueId}, #{title}, #{content}, #{color},
-        #{tags, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.PgTextArrayTypeHandler},
+        #{tags, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.StringArrayTypeHandler},
         #{authorId}, #{linkedAssetId}, #{sortOrder})
     </insert>
 
@@ -70,7 +70,7 @@
 
     <update id="updateTags">
         UPDATE venue_smart_notes
-        SET tags = #{tags, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.PgTextArrayTypeHandler},
+        SET tags = #{tags, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.StringArrayTypeHandler},
         updated_at = NOW()
         WHERE id = #{id}
     </update>

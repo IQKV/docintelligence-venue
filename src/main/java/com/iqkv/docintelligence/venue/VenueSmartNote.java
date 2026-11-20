@@ -17,6 +17,7 @@
 package com.iqkv.docintelligence.venue;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -71,10 +72,10 @@ public class VenueSmartNote {
    */
   private String color;
   /**
-   * User-defined tags stored as a PostgreSQL {@code text[]} array. {@code null} and empty mean
-   * the same: no tags.
+   * User-defined tags stored as a PostgreSQL {@code text[]} array, mapped to a {@code List}.
+   * {@code null} and empty mean the same: no tags.
    */
-  private String[] tags;
+  private List<String> tags;
   /**
    * UUID of the user who created the note. Set at insert time, never updated.
    */
@@ -132,11 +133,11 @@ public class VenueSmartNote {
     this.color = color;
   }
 
-  public String[] getTags() {
+  public List<String> getTags() {
     return tags;
   }
 
-  public void setTags(final String[] tags) {
+  public void setTags(final List<String> tags) {
     this.tags = tags;
   }
 
