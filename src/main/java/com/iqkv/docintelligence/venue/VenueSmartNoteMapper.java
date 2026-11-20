@@ -56,13 +56,20 @@ public interface VenueSmartNoteMapper {
 
   /**
    * All smart notes attached to one venue, ordered by {@code sort_order} ascending then
-   * {@code created_at} ascending (oldest first within the same order value). Never {@code null};
-   * an unknown venue yields an empty list.
+   * {@code created_at} in the requested direction. Never {@code null}; an unknown venue yields
+   * an empty list.
    *
-   * @param venueId the owning venue
+   * @param venueId   the owning venue
+   * @param direction {@code "ASC"} or {@code "DESC"} — applied to {@code created_at};
+   *                  any value other than {@code "DESC"} (case-insensitive) is treated as
+   *                  {@code "ASC"}
+   * @param pinned    {@code true} to return only pinned notes, {@code false} to return only
+   *                  unpinned notes, {@code null} to return all notes regardless of pin state
    * @return the venue's smart notes, sorted by sort order then creation time
    */
-  List<VenueSmartNote> findByVenueId(@Param("venueId") UUID venueId);
+  List<VenueSmartNote> findByVenueId(@Param("venueId") UUID venueId,
+                                     @Param("direction") String direction,
+                                     @Param("pinned") Boolean pinned);
 
   /**
    * Updates the {@code title} of one note without touching any other field.
@@ -108,6 +115,15 @@ public interface VenueSmartNoteMapper {
    * @param sortOrder the new sort order value
    */
   void updateSortOrder(@Param("id") UUID id, @Param("sortOrder") int sortOrder);
+
+  /**
+   * Updates the {@code pinned} flag of one note without touching any other field.
+   * Maintains {@code updated_at}. A no-op when no such row exists.
+   *
+   * @param id     the note to update
+   * @param pinned the new pin state
+   */
+  void updatePinned(@Param("id") UUID id, @Param("pinned") boolean pinned);
 
   /**
    * Permanently deletes the note with the given id. A no-op when no such row exists.

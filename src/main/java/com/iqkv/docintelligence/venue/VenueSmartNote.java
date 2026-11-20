@@ -90,6 +90,11 @@ public class VenueSmartNote {
    * {@code created_at} ascending. Defaults to {@code 0}.
    */
   private int sortOrder;
+  /**
+   * Whether the note is pinned. Pinned notes are displayed prominently in the UI regardless of
+   * sort order. Defaults to {@code false}.
+   */
+  private boolean pinned;
   private Instant createdAt;
   private Instant updatedAt;
 
@@ -163,6 +168,14 @@ public class VenueSmartNote {
 
   public void setSortOrder(final int sortOrder) {
     this.sortOrder = sortOrder;
+  }
+
+  public boolean isPinned() {
+    return pinned;
+  }
+
+  public void setPinned(final boolean pinned) {
+    this.pinned = pinned;
   }
 
   public Instant getCreatedAt() {

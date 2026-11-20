@@ -19,22 +19,24 @@
         <result property="authorId" column="author_id"/>
         <result property="linkedAssetId" column="linked_asset_id"/>
         <result property="sortOrder" column="sort_order"/>
+        <result property="pinned" column="pinned"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <sql id="venueSmartNoteColumns">
         id, venue_id, title, content, color, tags, author_id, linked_asset_id, sort_order,
-        created_at, updated_at
+        pinned, created_at, updated_at
     </sql>
 
     <insert id="insert" parameterType="com.iqkv.docintelligence.venue.VenueSmartNote">
         INSERT INTO venue_smart_notes
-        (id, venue_id, title, content, color, tags, author_id, linked_asset_id, sort_order)
+        (id, venue_id, title, content, color, tags, author_id, linked_asset_id, sort_order,
+        pinned)
         VALUES
         (#{id}, #{venueId}, #{title}, #{content}, #{color},
         #{tags, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.StringArrayTypeHandler},
-        #{authorId}, #{linkedAssetId}, #{sortOrder})
+        #{authorId}, #{linkedAssetId}, #{sortOrder}, #{pinned})
     </insert>
 
     <select id="findById" resultMap="venueSmartNoteResultMap">
@@ -47,7 +49,18 @@
         SELECT <include refid="venueSmartNoteColumns"/>
         FROM venue_smart_notes
         WHERE venue_id = #{venueId}
-        ORDER BY sort_order ASC, created_at ASC
+        <if test="pinned != null">
+            AND pinned = #{pinned}
+        </if>
+        ORDER BY sort_order ASC,
+        <choose>
+            <when test="direction != null and direction.equalsIgnoreCase('DESC')">
+                created_at DESC
+            </when>
+            <otherwise>
+                created_at ASC
+            </otherwise>
+        </choose>
     </select>
 
     <update id="updateTitle">
@@ -78,6 +91,12 @@
     <update id="updateSortOrder">
         UPDATE venue_smart_notes
         SET sort_order = #{sortOrder}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updatePinned">
+        UPDATE venue_smart_notes
+        SET pinned = #{pinned}, updated_at = NOW()
         WHERE id = #{id}
     </update>
 
