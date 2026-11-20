@@ -52,6 +52,12 @@
  *       tenant-scoped {@code venue_text_contents} table; supports semantic search via a
  *       pgvector {@code embedding} column; {@code VenueTextContentMapper} and
  *       {@code mappers/venue/VenueTextContentMapper.xml} back it</li>
+ *   <li>{@code VenueSmartNote} — a user-authored sticky note attached to a tenant venue; a row
+ *       of the tenant-scoped {@code venue_smart_notes} table; carries a title, HTML content,
+ *       a background colour, a {@code text[]} tags array, the author UUID, an optional link to
+ *       a {@code venue_assets} row, and an explicit {@code sort_order};
+ *       {@code VenueSmartNoteMapper} and {@code mappers/venue/VenueSmartNoteMapper.xml}
+ *       back it</li>
  * </ul>
  *
  * <h2>What Stays Out</h2>

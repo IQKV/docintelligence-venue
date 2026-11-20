@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iqkv.docintelligence.venue.VenueSmartNoteMapper">
+
+    <!-- Tenant-scoped: statements are unqualified by schema. The MyBatisSchemaInterceptor in each
+         consuming service sets search_path to t_{tenantKey}, public before every statement, so
+         'venue_smart_notes' resolves to the active tenant schema. -->
+
+    <resultMap id="venueSmartNoteResultMap"
+               type="com.iqkv.docintelligence.venue.VenueSmartNote">
+        <id property="id" column="id"/>
+        <result property="venueId" column="venue_id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="color" column="color"/>
+        <result property="tags" column="tags"
+                typeHandler="com.iqkv.foundation.mybatis.util.PgTextArrayTypeHandler"/>
+        <result property="authorId" column="author_id"/>
+        <result property="linkedAssetId" column="linked_asset_id"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="venueSmartNoteColumns">
+        id, venue_id, title, content, color, tags, author_id, linked_asset_id, sort_order,
+        created_at, updated_at
+    </sql>
+
+    <insert id="insert" parameterType="com.iqkv.docintelligence.venue.VenueSmartNote">
+        INSERT INTO venue_smart_notes
+        (id, venue_id, title, content, color, tags, author_id, linked_asset_id, sort_order)
+        VALUES
+        (#{id}, #{venueId}, #{title}, #{content}, #{color},
+        #{tags, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.PgTextArrayTypeHandler},
+        #{authorId}, #{linkedAssetId}, #{sortOrder})
+    </insert>
+
+    <select id="findById" resultMap="venueSmartNoteResultMap">
+        SELECT <include refid="venueSmartNoteColumns"/>
+        FROM venue_smart_notes
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByVenueId" resultMap="venueSmartNoteResultMap">
+        SELECT <include refid="venueSmartNoteColumns"/>
+        FROM venue_smart_notes
+        WHERE venue_id = #{venueId}
+        ORDER BY sort_order ASC, created_at ASC
+    </select>
+
+    <update id="updateTitle">
+        UPDATE venue_smart_notes
+        SET title = #{title}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateContent">
+        UPDATE venue_smart_notes
+        SET content = #{content}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateColor">
+        UPDATE venue_smart_notes
+        SET color = #{color}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateTags">
+        UPDATE venue_smart_notes
+        SET tags = #{tags, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.PgTextArrayTypeHandler},
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateSortOrder">
+        UPDATE venue_smart_notes
+        SET sort_order = #{sortOrder}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM venue_smart_notes WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByVenueId">
+        DELETE FROM venue_smart_notes WHERE venue_id = #{venueId}
+    </delete>
+
+    <select id="countByVenueId" resultType="long">
+        SELECT COUNT(*) FROM venue_smart_notes WHERE venue_id = #{venueId}
+    </select>
+
+</mapper>
