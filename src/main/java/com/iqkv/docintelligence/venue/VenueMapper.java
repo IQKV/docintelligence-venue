@@ -121,22 +121,22 @@ public interface VenueMapper {
   long countByCreatedBy(@Param("userId") UUID userId);
 
   /**
-   * Keyword and city search over venues owned by one user in the personal workspace
-   * ({@code t_platform} schema). Scoped to {@code created_by = userId} so records from
-   * different personal users never mix.
+   * Keyword and city search over the venues one user owns or has been given access to in the
+   * personal workspace ({@code t_platform} schema). Scoped to {@code created_by = userId} or a
+   * matching {@code venue_shares} grant so records from different personal users never mix.
    *
    * <p>Both filters are optional: a {@code null} or blank value drops that predicate.
    * Sort behaviour matches {@link #search}: {@code "name"} sorts by name in {@code sortDir};
    * anything else falls back to {@code created_at DESC}.
    *
-   * @param userId  the owner — matches the {@code created_by} column
+   * @param userId  the requesting user — matches {@code created_by}, or the grantee of a share
    * @param search  free-text keyword matched against name, address and city; nullable
    * @param city    exact city filter, compared case-insensitively; nullable
    * @param sortBy  optional sort field — {@code "name"} or {@code null} for default
    * @param sortDir optional sort direction — {@code "asc"} or {@code "desc"}; nullable
    * @param limit   maximum number of rows to return
    * @param offset  zero-based row offset
-   * @return matching venues owned by the user, ordered by the requested sort
+   * @return matching venues the user owns or has a share on, ordered by the requested sort
    */
   List<Venue> searchPersonal(@Param("userId") UUID userId,
                              @Param("search") String search,
@@ -150,10 +150,10 @@ public interface VenueMapper {
    * Counts the rows {@link #searchPersonal(UUID, String, String, String, String, int, int)}
    * would return for the same user and filters.
    *
-   * @param userId the owner
+   * @param userId the requesting user
    * @param search free-text keyword; nullable
    * @param city   exact city filter; nullable
-   * @return total number of matching venues owned by the user
+   * @return total number of matching venues the user owns or has a share on
    */
   long countSearchPersonal(@Param("userId") UUID userId,
                            @Param("search") String search,

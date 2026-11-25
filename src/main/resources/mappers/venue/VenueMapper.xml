@@ -139,8 +139,17 @@
         SELECT COUNT(*) FROM venues WHERE created_by = #{userId}
     </select>
 
+    <!-- Personal workspace scope: the user's own venues plus the ones shared with them, so
+         records from different personal users in t_platform never mix. -->
     <sql id="venuePersonalFilters">
-        WHERE created_by = #{userId}
+        WHERE (
+            created_by = #{userId}
+            OR EXISTS (
+                SELECT 1 FROM venue_shares
+                WHERE venue_id = venues.id
+                AND shared_with_user_id = #{userId}
+            )
+        )
         <if test="search != null and search != ''">
             AND (LOWER(name) LIKE LOWER(CONCAT('%', #{search}, '%'))
             OR LOWER(address) LIKE LOWER(CONCAT('%', #{search}, '%'))
@@ -151,8 +160,8 @@
         </if>
     </sql>
 
-    <!-- Personal workspace: search scoped to one user's own venues so records from different
-         personal users in t_platform never mix. -->
+    <!-- Personal workspace: search scoped to the venues one user owns or has been given a share
+         on, so records from different personal users in t_platform never mix. -->
     <select id="searchPersonal" resultMap="venueResultMap">
         SELECT id, name, description, address, city, location_lat, location_lng, metadata,
         confidence, source, master_venue_id, created_by, visibility, created_at, updated_at
