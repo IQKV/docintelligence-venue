@@ -33,8 +33,26 @@ import java.util.UUID;
  * <p>The table is created and owned by {@code docintelligence-catalog-service}, which owns every
  * migration. {@code metadata} is the raw JSONB canonical metadata document and carries a
  * mandatory {@code _schema_version} key. This type carries the columns only and never issues DDL.
+ *
+ * <p>{@code createdBy} is the UUID of the user who created the venue. Set at insert time and
+ * never changed. In org tenants it is an audit field. In a personal workspace
+ * ({@code t_platform} schema) it is the owner: only the owner and users granted
+ * {@code ADMIN} via {@link VenueShare} may delete the venue.
+ *
+ * <p>{@code visibility} controls catalog-search visibility. Use the {@code VISIBILITY_*}
+ * constants. Org tenants should default to {@link #VISIBILITY_PUBLIC} so the venue appears
+ * immediately to all org members; personal tenants should default to {@link #VISIBILITY_PRIVATE}
+ * and become visible only when explicitly shared via {@link VenueShare}.
  */
 public class Venue {
+
+  /** All org members can read the venue in catalog search. */
+  public static final String VISIBILITY_PUBLIC = "PUBLIC";
+  /**
+   * Only the owner ({@code createdBy}) and users with an explicit {@link VenueShare} grant can
+   * read the venue.
+   */
+  public static final String VISIBILITY_PRIVATE = "PRIVATE";
 
   private UUID id;
   private String name;
@@ -59,6 +77,16 @@ public class Venue {
    * Dimension must match the configured Ollama embedding model (nomic-embed-text → 768).
    */
   private float[] embedding;
+  /**
+   * UUID of the user who created the venue. Set at insert time, never updated.
+   * In a personal workspace this is the owner; see {@link VenueShare} for sharing.
+   */
+  private UUID createdBy;
+  /**
+   * Catalog-search visibility. One of {@link #VISIBILITY_PUBLIC} or {@link #VISIBILITY_PRIVATE}.
+   * Org tenants default to {@code PUBLIC}; personal tenants default to {@code PRIVATE}.
+   */
+  private String visibility;
   private Instant createdAt;
   private Instant updatedAt;
 
@@ -156,6 +184,22 @@ public class Venue {
 
   public void setEmbedding(final float[] embedding) {
     this.embedding = embedding;
+  }
+
+  public UUID getCreatedBy() {
+    return createdBy;
+  }
+
+  public void setCreatedBy(final UUID createdBy) {
+    this.createdBy = createdBy;
+  }
+
+  public String getVisibility() {
+    return visibility;
+  }
+
+  public void setVisibility(final String visibility) {
+    this.visibility = visibility;
   }
 
   public Instant getCreatedAt() {

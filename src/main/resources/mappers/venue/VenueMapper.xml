@@ -22,6 +22,8 @@
         <result property="masterVenueId" column="master_venue_id"/>
         <result property="embedding" column="embedding"
                 typeHandler="com.iqkv.foundation.mybatis.util.PgVectorTypeHandler"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="visibility" column="visibility"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
@@ -29,16 +31,16 @@
     <insert id="insert" parameterType="com.iqkv.docintelligence.venue.Venue">
         INSERT INTO venues
         (id, name, description, address, city, location_lat, location_lng, metadata, confidence,
-        source, master_venue_id)
+        source, master_venue_id, created_by, visibility)
         VALUES
         (#{id}, #{name}, #{description}, #{address}, #{city}, #{locationLat}, #{locationLng},
         #{metadata, jdbcType=OTHER, typeHandler=com.iqkv.foundation.mybatis.util.JsonTypeHandler},
-        #{confidence}, #{source}, #{masterVenueId})
+        #{confidence}, #{source}, #{masterVenueId}, #{createdBy}, #{visibility})
     </insert>
 
     <select id="findById" resultMap="venueResultMap">
         SELECT id, name, description, address, city, location_lat, location_lng, metadata,
-               confidence, source, master_venue_id, created_at, updated_at
+               confidence, source, master_venue_id, created_by, visibility, created_at, updated_at
         FROM venues
         WHERE id = #{id}
     </select>
@@ -55,6 +57,7 @@
         confidence = #{confidence},
         source = #{source},
         master_venue_id = #{masterVenueId},
+        visibility = #{visibility},
         updated_at = NOW()
         WHERE id = #{id}
     </update>
@@ -78,7 +81,7 @@
 
     <select id="search" resultMap="venueResultMap">
         SELECT id, name, description, address, city, location_lat, location_lng, metadata,
-        confidence, source, master_venue_id, created_at, updated_at
+        confidence, source, master_venue_id, created_by, visibility, created_at, updated_at
         FROM venues
         <include refid="venueSearchFilters"/>
         ORDER BY
@@ -113,6 +116,116 @@
         WHERE embedding IS NULL
         ORDER BY created_at
         LIMIT #{limit}
+    </select>
+
+    <!-- Sets visibility for one venue without touching any other field. -->
+    <update id="updateVisibility">
+        UPDATE venues
+        SET visibility = #{visibility}, updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- Personal workspace: venues owned by one user, most recently added first. -->
+    <select id="findByCreatedBy" resultMap="venueResultMap">
+        SELECT id, name, description, address, city, location_lat, location_lng, metadata,
+        confidence, source, master_venue_id, created_by, visibility, created_at, updated_at
+        FROM venues
+        WHERE created_by = #{userId}
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByCreatedBy" resultType="long">
+        SELECT COUNT(*) FROM venues WHERE created_by = #{userId}
+    </select>
+
+    <sql id="venuePersonalFilters">
+        WHERE created_by = #{userId}
+        <if test="search != null and search != ''">
+            AND (LOWER(name) LIKE LOWER(CONCAT('%', #{search}, '%'))
+            OR LOWER(address) LIKE LOWER(CONCAT('%', #{search}, '%'))
+            OR LOWER(city) LIKE LOWER(CONCAT('%', #{search}, '%')))
+        </if>
+        <if test="city != null and city != ''">
+            AND LOWER(city) = LOWER(#{city})
+        </if>
+    </sql>
+
+    <!-- Personal workspace: search scoped to one user's own venues so records from different
+         personal users in t_platform never mix. -->
+    <select id="searchPersonal" resultMap="venueResultMap">
+        SELECT id, name, description, address, city, location_lat, location_lng, metadata,
+        confidence, source, master_venue_id, created_by, visibility, created_at, updated_at
+        FROM venues
+        <include refid="venuePersonalFilters"/>
+        ORDER BY
+        <choose>
+            <when test="sortBy == 'name' and sortDir == 'desc'">name DESC</when>
+            <when test="sortBy == 'name'">name ASC</when>
+            <otherwise>created_at DESC</otherwise>
+        </choose>
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countSearchPersonal" resultType="long">
+        SELECT COUNT(*)
+        FROM venues
+        <include refid="venuePersonalFilters"/>
+    </select>
+
+    <sql id="venueOrgFilters">
+        <where>
+            <if test="search != null and search != ''">
+                AND (LOWER(name) LIKE LOWER(CONCAT('%', #{search}, '%'))
+                OR LOWER(address) LIKE LOWER(CONCAT('%', #{search}, '%'))
+                OR LOWER(city) LIKE LOWER(CONCAT('%', #{search}, '%')))
+            </if>
+            <if test="city != null and city != ''">
+                AND LOWER(city) = LOWER(#{city})
+            </if>
+            <if test="visibility != null and visibility != ''">
+                AND visibility = #{visibility}
+            </if>
+        </where>
+    </sql>
+
+    <!-- Org-tenant search with optional visibility filter. Pass visibility='PUBLIC' for plain
+         org members; pass null for admin views that need to see all records. -->
+    <select id="searchOrg" resultMap="venueResultMap">
+        SELECT id, name, description, address, city, location_lat, location_lng, metadata,
+        confidence, source, master_venue_id, created_by, visibility, created_at, updated_at
+        FROM venues
+        <include refid="venueOrgFilters"/>
+        ORDER BY
+        <choose>
+            <when test="sortBy == 'name' and sortDir == 'desc'">name DESC</when>
+            <when test="sortBy == 'name'">name ASC</when>
+            <otherwise>created_at DESC</otherwise>
+        </choose>
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countSearchOrg" resultType="long">
+        SELECT COUNT(*)
+        FROM venues
+        <include refid="venueOrgFilters"/>
+    </select>
+
+    <!-- Single-query ownership-or-share access check. Returns the venue only when the user
+         owns it (created_by) or holds any venue_shares grant. -->
+    <select id="findByIdForUser" resultMap="venueResultMap">
+        SELECT id, name, description, address, city, location_lat, location_lng, metadata,
+               confidence, source, master_venue_id, created_by, visibility, created_at, updated_at
+        FROM venues
+        WHERE id = #{id}
+        AND (
+            created_by = #{userId}
+            OR EXISTS (
+                SELECT 1 FROM venue_shares
+                WHERE venue_id = #{id}
+                AND shared_with_user_id = #{userId}
+            )
+        )
     </select>
 
 </mapper>

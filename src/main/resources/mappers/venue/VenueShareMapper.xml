@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iqkv.docintelligence.venue.VenueShareMapper">
+
+    <!-- Tenant-scoped: statements are unqualified by schema. The MyBatisSchemaInterceptor in each
+         consuming service sets search_path to t_{tenantKey}, public before every statement, so
+         'venue_shares' resolves to the active tenant schema. -->
+
+    <resultMap id="venueShareResultMap"
+               type="com.iqkv.docintelligence.venue.VenueShare">
+        <id property="id" column="id"/>
+        <result property="venueId" column="venue_id"/>
+        <result property="sharedWithUserId" column="shared_with_user_id"/>
+        <result property="role" column="role"/>
+        <result property="grantedBy" column="granted_by"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <sql id="venueShareColumns">
+        id, venue_id, shared_with_user_id, role, granted_by, created_at
+    </sql>
+
+    <insert id="insert" parameterType="com.iqkv.docintelligence.venue.VenueShare">
+        INSERT INTO venue_shares
+        (id, venue_id, shared_with_user_id, role, granted_by)
+        VALUES
+        (#{id}, #{venueId}, #{sharedWithUserId}, #{role}, #{grantedBy})
+    </insert>
+
+    <select id="findByVenueId" resultMap="venueShareResultMap">
+        SELECT <include refid="venueShareColumns"/>
+        FROM venue_shares
+        WHERE venue_id = #{venueId}
+        ORDER BY created_at ASC
+    </select>
+
+    <select id="findByVenueIdAndUserId" resultMap="venueShareResultMap">
+        SELECT <include refid="venueShareColumns"/>
+        FROM venue_shares
+        WHERE venue_id = #{venueId}
+        AND shared_with_user_id = #{userId}
+    </select>
+
+    <select id="findBySharedWithUserId" resultMap="venueShareResultMap">
+        SELECT <include refid="venueShareColumns"/>
+        FROM venue_shares
+        WHERE shared_with_user_id = #{userId}
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countBySharedWithUserId" resultType="long">
+        SELECT COUNT(*) FROM venue_shares WHERE shared_with_user_id = #{userId}
+    </select>
+
+    <update id="updateRole">
+        UPDATE venue_shares
+        SET role = #{role}
+        WHERE venue_id = #{venueId}
+        AND shared_with_user_id = #{userId}
+    </update>
+
+    <delete id="deleteByVenueIdAndUserId">
+        DELETE FROM venue_shares
+        WHERE venue_id = #{venueId}
+        AND shared_with_user_id = #{userId}
+    </delete>
+
+    <delete id="deleteByVenueId">
+        DELETE FROM venue_shares WHERE venue_id = #{venueId}
+    </delete>
+
+</mapper>

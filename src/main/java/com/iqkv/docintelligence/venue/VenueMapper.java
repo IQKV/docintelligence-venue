@@ -90,6 +90,128 @@ public interface VenueMapper {
   void updateEmbedding(@Param("id") UUID id, @Param("embedding") float[] embedding);
 
   /**
+   * Sets the {@code visibility} of one venue without touching any other field.
+   * Maintains {@code updated_at}. A no-op when no such row exists.
+   *
+   * @param id         the venue to update
+   * @param visibility one of {@code Venue.VISIBILITY_PUBLIC} or {@code Venue.VISIBILITY_PRIVATE}
+   */
+  void updateVisibility(@Param("id") UUID id, @Param("visibility") String visibility);
+
+  /**
+   * All venues created by one user, ordered by {@code created_at} descending (most recently
+   * added first). Used in the personal workspace to list a user's own venues.
+   * Never {@code null}; an unknown user yields an empty list.
+   *
+   * @param userId the owner — matches the {@code created_by} column
+   * @param limit  maximum number of rows to return
+   * @param offset zero-based row offset
+   * @return venues owned by the user, most recently added first
+   */
+  List<Venue> findByCreatedBy(@Param("userId") UUID userId,
+                              @Param("limit") int limit,
+                              @Param("offset") int offset);
+
+  /**
+   * Counts the rows {@link #findByCreatedBy(UUID, int, int)} would return for the same user.
+   *
+   * @param userId the owner
+   * @return total number of venues created by the user
+   */
+  long countByCreatedBy(@Param("userId") UUID userId);
+
+  /**
+   * Keyword and city search over venues owned by one user in the personal workspace
+   * ({@code t_platform} schema). Scoped to {@code created_by = userId} so records from
+   * different personal users never mix.
+   *
+   * <p>Both filters are optional: a {@code null} or blank value drops that predicate.
+   * Sort behaviour matches {@link #search}: {@code "name"} sorts by name in {@code sortDir};
+   * anything else falls back to {@code created_at DESC}.
+   *
+   * @param userId  the owner — matches the {@code created_by} column
+   * @param search  free-text keyword matched against name, address and city; nullable
+   * @param city    exact city filter, compared case-insensitively; nullable
+   * @param sortBy  optional sort field — {@code "name"} or {@code null} for default
+   * @param sortDir optional sort direction — {@code "asc"} or {@code "desc"}; nullable
+   * @param limit   maximum number of rows to return
+   * @param offset  zero-based row offset
+   * @return matching venues owned by the user, ordered by the requested sort
+   */
+  List<Venue> searchPersonal(@Param("userId") UUID userId,
+                             @Param("search") String search,
+                             @Param("city") String city,
+                             @Param("sortBy") String sortBy,
+                             @Param("sortDir") String sortDir,
+                             @Param("limit") int limit,
+                             @Param("offset") int offset);
+
+  /**
+   * Counts the rows {@link #searchPersonal(UUID, String, String, String, String, int, int)}
+   * would return for the same user and filters.
+   *
+   * @param userId the owner
+   * @param search free-text keyword; nullable
+   * @param city   exact city filter; nullable
+   * @return total number of matching venues owned by the user
+   */
+  long countSearchPersonal(@Param("userId") UUID userId,
+                           @Param("search") String search,
+                           @Param("city") String city);
+
+  /**
+   * Keyword, city and visibility search over all venues in an org-tenant schema.
+   *
+   * <p>Pass {@code visibility = Venue.VISIBILITY_PUBLIC} to restrict results to public venues
+   * (e.g. when the caller is a plain org member). Pass {@code null} to return all venues
+   * regardless of visibility (e.g. for an org admin view). Other filters behave as in
+   * {@link #search}.
+   *
+   * @param search     free-text keyword matched against name, address and city; nullable
+   * @param city       exact city filter, compared case-insensitively; nullable
+   * @param visibility {@code "PUBLIC"}, {@code "PRIVATE"}, or {@code null} to skip the filter
+   * @param sortBy     optional sort field — {@code "name"} or {@code null} for default
+   * @param sortDir    optional sort direction — {@code "asc"} or {@code "desc"}; nullable
+   * @param limit      maximum number of rows to return
+   * @param offset     zero-based row offset
+   * @return matching org venues ordered by the requested sort
+   */
+  List<Venue> searchOrg(@Param("search") String search,
+                        @Param("city") String city,
+                        @Param("visibility") String visibility,
+                        @Param("sortBy") String sortBy,
+                        @Param("sortDir") String sortDir,
+                        @Param("limit") int limit,
+                        @Param("offset") int offset);
+
+  /**
+   * Counts the rows {@link #searchOrg(String, String, String, String, String, int, int)} would
+   * return for the same filters.
+   *
+   * @param search     free-text keyword; nullable
+   * @param city       exact city filter; nullable
+   * @param visibility visibility filter; nullable
+   * @return total number of matching org venues
+   */
+  long countSearchOrg(@Param("search") String search,
+                      @Param("city") String city,
+                      @Param("visibility") String visibility);
+
+  /**
+   * Returns one venue by id when the given user may access it — either because they own it
+   * ({@code created_by = userId}) or because a {@code venue_shares} row grants them access.
+   * Returns {@link Optional#empty()} when the venue does not exist or the user has no access.
+   *
+   * <p>Combines the existence check and the access check in a single query, avoiding a separate
+   * round-trip to {@link VenueShareMapper}.
+   *
+   * @param id     the venue to fetch
+   * @param userId the requesting user
+   * @return the venue if accessible, or empty
+   */
+  Optional<Venue> findByIdForUser(@Param("id") UUID id, @Param("userId") UUID userId);
+
+  /**
    * Returns the UUIDs of venues whose {@code embedding} column is still {@code NULL},
    * ordered by {@code created_at} ascending (oldest-first), up to {@code limit} rows.
    * Used by the backfill scheduler.
